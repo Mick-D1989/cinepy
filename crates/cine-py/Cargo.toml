@@ -12,4 +12,3 @@ crate-type = ["cdylib"]
 pyo3 = { workspace = true }
 align_from_packed = {path="../align_from_packed"}
 image = "0.25.6"
-memmap2 = "0.9.4"
