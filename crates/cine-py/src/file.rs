@@ -1,6 +1,5 @@
 use crate::{cine, conversions};
 use image::{ImageBuffer, Luma};
-use memmap2::Mmap;
 use pyo3::prelude::*;
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
@@ -8,7 +7,7 @@ use std::mem;
 
 #[pyclass(module = "cinepy", name = "CineFile")]
 pub struct CineFile {
-    pub file: Mmap,
+    pub file: File,
     #[pyo3(get)]
     pub cine_file_header: cine::CineFileHeader,
     #[pyo3(get)]
@@ -23,33 +22,29 @@ pub struct CineFile {
 impl CineFile {
     #[new]
     pub fn new(path: &str) -> Self {
-        let mut tmp_file = File::open(path).expect("Could not open file");
-        let file = unsafe { Mmap::map(&tmp_file).expect("Could not map file") };
+        let mut file = File::open(path).unwrap();
         // Read CINEFILEHEADER
-        let header: cine::CineFileHeader = read_structs(&mut tmp_file).unwrap();
+        let header: cine::CineFileHeader = read_structs(&mut file).unwrap();
 
         // Read BITMAPINFOHEADER
-        tmp_file
-            .seek(SeekFrom::Start(header.offset_image_header as u64))
+        file.seek(SeekFrom::Start(header.offset_image_header as u64))
             .unwrap();
-        let bitmap: cine::BitmapInfoHeader = read_structs(&mut tmp_file).unwrap();
+        let bitmap: cine::BitmapInfoHeader = read_structs(&mut file).unwrap();
 
         // Read SETUP
-        tmp_file
-            .seek(SeekFrom::Start(header.offset_setup as u64))
+        file.seek(SeekFrom::Start(header.offset_setup as u64))
             .unwrap();
-        let packed_setup: cine::PackedSetup = read_structs(&mut tmp_file).unwrap();
+        let packed_setup: cine::PackedSetup = read_structs(&mut file).unwrap();
         let setup: cine::Setup = cine::Setup::from(packed_setup);
 
         // Read frame offsets
         let image_count = header.image_count as usize;
         let mut p_images = vec![0i64; image_count];
-        tmp_file
-            .seek(SeekFrom::Start(header.offset_image_offsets as u64))
+        file.seek(SeekFrom::Start(header.offset_image_offsets as u64))
             .unwrap();
         for image in p_images.iter_mut().take(image_count) {
             let mut buf = [0u8; 8];
-            tmp_file.read_exact(&mut buf).unwrap();
+            file.read_exact(&mut buf).unwrap();
             *image = i64::from_le_bytes(buf);
         }
 
@@ -63,29 +58,32 @@ impl CineFile {
     }
 
     fn get_frame(&mut self, frame_no: i32) -> Vec<u16> {
-        if frame_no >= self.cine_file_header.image_count as i32 {
-            panic!("Frame requested {} does not exist...", frame_no);
+        // Check request frame actually exists, rq if it doesnt
+        if frame_no > (self.cine_file_header.image_count as i32) {
+            panic!("Frame requested {} does not exist in the file provided with total length of frames {}", frame_no, (self.cine_file_header.image_count-1))
         }
 
-        let pixel_buffer_size = self.bitmap_info_header.bi_size_image as usize;
-        // Get the start byte of the image's annotations
-        let annotations_loc = self.p_images[frame_no as usize] as usize;
+        let pixel_buffer_size: u32 = self.bitmap_info_header.bi_size_image;
+        // get the start byte of the image requesteds annotations
+        let annotations_loc: i64 = self.p_images[frame_no as usize];
+        // Get the size of the annotations so we can skip it and get to the start of the pixel location
+        self.file
+            .seek(SeekFrom::Start(annotations_loc as u64))
+            .unwrap();
+        let mut anno_offset_buf = [0u8; 4];
+        self.file.read_exact(&mut anno_offset_buf).unwrap();
+        let offset_to_pixels = u32::from_le_bytes(anno_offset_buf);
 
-        // --- I/O OPTIMIZATION ---
-        // No more seeks or reads! Just slice the mmap.
+        // Get the pixels
+        self.file
+            .seek(SeekFrom::Start(
+                (annotations_loc + offset_to_pixels as i64) as u64,
+            ))
+            .unwrap();
+        let mut pixel_buffer = vec![0u8; pixel_buffer_size as usize];
+        self.file.read_exact(&mut pixel_buffer).unwrap();
 
-        // 1. Get the offset from the annotation block
-        let anno_offset_bytes = &self.file[annotations_loc..annotations_loc + 4];
-        let offset_to_pixels = u32::from_le_bytes(anno_offset_bytes.try_into().unwrap());
-
-        // 2. Get the pixels
-        let pixel_start = annotations_loc + offset_to_pixels as usize;
-        let pixel_end = pixel_start + pixel_buffer_size;
-        let pixel_buffer: &[u8] = &self.file[pixel_start..pixel_end];
-        // --- End of I/O ---
-
-        // The rest of your CPU-bound logic remains the same
-        let mut unpacked_pixels: Vec<u16> = conversions::decompress_10bit_packed(pixel_buffer);
+        let mut unpacked_pixels: Vec<u16> = conversions::decompress_10bit_packed(&pixel_buffer);
         let width: u32 = self.bitmap_info_header.bi_width as u32;
         let height: u32 = self.bitmap_info_header.bi_height as u32;
 
@@ -97,44 +95,6 @@ impl CineFile {
         conversions::grayscale_10_to_16bit(&mut unpacked_pixels);
         unpacked_pixels
     }
-    // fn get_frame(&mut self, frame_no: i32) -> Vec<u16> {
-    //     // Check request frame actually exists, rq if it doesnt
-    //     if frame_no > (self.cine_file_header.image_count as i32) {
-    //         panic!("Frame requested {} does not exist in the file provided with total length of frames {}", frame_no, (self.cine_file_header.image_count-1))
-    //     }
-
-    //     let pixel_buffer_size: u32 = self.bitmap_info_header.bi_size_image;
-    //     // get the start byte of the image requesteds annotations
-    //     let annotations_loc: i64 = self.p_images[frame_no as usize];
-    //     // Get the size of the annotations so we can skip it and get to the start of the pixel location
-    //     self.file
-    //         .seek(SeekFrom::Start(annotations_loc as u64))
-    //         .unwrap();
-    //     let mut anno_offset_buf = [0u8; 4];
-    //     self.file.read_exact(&mut anno_offset_buf).unwrap();
-    //     let offset_to_pixels = u32::from_le_bytes(anno_offset_buf);
-
-    //     // Get the pixels
-    //     self.file
-    //         .seek(SeekFrom::Start(
-    //             (annotations_loc + offset_to_pixels as i64) as u64,
-    //         ))
-    //         .unwrap();
-    //     let mut pixel_buffer = vec![0u8; pixel_buffer_size as usize];
-    //     self.file.read_exact(&mut pixel_buffer).unwrap();
-
-    //     let mut unpacked_pixels: Vec<u16> = conversions::decompress_10bit_packed(&pixel_buffer);
-    //     let width: u32 = self.bitmap_info_header.bi_width as u32;
-    //     let height: u32 = self.bitmap_info_header.bi_height as u32;
-
-    //     if self.setup.bFlipV == 1 {
-    //         conversions::flip_vertical_16bit(&mut unpacked_pixels, width, height);
-    //     }
-
-    //     conversions::apply_lut_10_to_12(&mut unpacked_pixels);
-    //     conversions::grayscale_10_to_16bit(&mut unpacked_pixels);
-    //     unpacked_pixels
-    // }
 
     fn save_single_frame(&mut self, frame_no: i32, out_path: String) {
         let width: u32 = self.bitmap_info_header.bi_width as u32;
