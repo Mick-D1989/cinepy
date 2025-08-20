@@ -1,0 +1,476 @@
+#![allow(non_snake_case, dead_code)]
+use align_from_packed::from_packed;
+use pyo3::prelude::*;
+
+//**  CINE FILE HEADER   **//
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[pyclass(module = "cinepy", get_all)]
+pub struct CineFileHeader {
+    pub type_marker: u16, // "CI" = 0x4943 (little endian)
+    pub header_size: u16,
+    pub compression: u16,
+    pub version: u16,
+    pub first_movie_image: i32,
+    pub total_image_count: u32,
+    pub first_image_no: i32,
+    pub image_count: u32,
+    pub offset_image_header: u32,
+    pub offset_setup: u32,
+    pub offset_image_offsets: u32,
+    pub trigger_time: Time64,
+}
+
+//**  BITMAP INFO HEADER   **//
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[pyclass(module = "cinepy", get_all)]
+pub struct BitmapInfoHeader {
+    pub bi_size: u32,
+    pub bi_width: i32,
+    pub bi_height: i32,
+    pub bi_planes: u16,
+    pub bi_bit_count: u16,
+    pub bi_compression: u32,
+    pub bi_size_image: u32,
+    pub bi_x_pels_per_meter: i32,
+    pub bi_y_pels_per_meter: i32,
+    pub bi_clr_used: u32,
+    pub bi_clr_important: u32,
+}
+
+//**  SETUP STRUCTURE   **//
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[pyclass(module = "cinepy", get_all)]
+pub struct Time64 {
+    pub fractions: u32,
+    pub seconds: u32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[pyclass(module = "cinepy", get_all)]
+pub struct WBGain {
+    pub R: f32,
+    pub B: f32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[pyclass(module = "cinepy", get_all)]
+pub struct IMFilter {
+    pub dim: i32,
+    pub shifts: i32,
+    pub bias: i32,
+    pub Coef: [i32; 25],
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[pyclass(module = "cinepy", get_all)]
+pub struct Rect {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+#[pyclass(module = "cinepy", get_all)]
+pub struct TC {
+    pub time_code: u32,
+    pub user_bits: u32,
+}
+
+pub const OLDMAXFILENAME: usize = 65;
+pub const MAXLENDESCRIPTION_OLD: usize = 121;
+pub const MAXLENDESCRIPTION: usize = 4096;
+pub const MAXSTDSTRSZ: usize = 256;
+pub const MAXSTDSTRSZ_128: usize = 128;
+pub const MAXSTDSTRSZ_64: usize = 64;
+pub const MAXSTDSTRSZ_32: usize = 32;
+pub const MAXSTDSTRSZ_16: usize = 16;
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+#[from_packed(PackedSetup)]
+#[pyclass(module = "cinepy", get_all)]
+pub struct Setup {
+    pub FrameRate16: u16,
+    pub Shutter16: u16,
+    pub PostTrigger16: u16,
+    pub FrameDelay16: u16,
+    pub AspectRatio: u16,
+    pub Res7: u16,
+    pub Res8: u16,
+    pub Res9: u8,
+    pub Res10: u8,
+    pub Res11: u8,
+    pub TrigFrame: u8,
+    pub Res12: u8,
+    pub DescriptionOld: [u8; MAXLENDESCRIPTION_OLD],
+    pub Mark: u16,
+    pub Length: u16,
+    pub Res13: u16,
+    pub SigOption: u16,
+    pub BinChannels: i16,
+    pub SamplesPerImage: u8,
+    pub BinName: [[u8; 11]; 8],
+    pub AnaOption: u16,
+    pub AnaChannels: i16,
+    pub Res6: u8,
+    pub AnaBoard: u8,
+    pub ChOption: [i16; 8],
+    pub AnaGain: [f32; 8],
+    pub AnaUnit: [[u8; 6]; 8],
+    pub AnaName: [[u8; 11]; 8],
+    pub lFirstImage: i32,
+    pub dwImageCount: u32,
+    pub nQFactor: i16,
+    pub wCineFileType: u16,
+    pub szCinePath: [[u8; OLDMAXFILENAME]; 4],
+    pub Res14: u16,
+    pub Res15: u8,
+    pub Res16: u8,
+    pub Res17: u16,
+    pub Res18: f64,
+    pub Res19: f64,
+    pub Res20: u16,
+    pub Res1: i32,
+    pub Res2: i32,
+    pub Res3: i32,
+    pub ImWidth: u16,
+    pub ImHeight: u16,
+    pub EDRShutter16: u16,
+    pub Serial: u32,
+    pub Saturation: i32,
+    pub Res5: u8,
+    pub AutoExposure: u32,
+    pub bFlipH: u32, // these are bool32_t in the spec
+    pub bFlipV: u32, // these are bool32_t in the spec
+    pub Grid: u32,
+    pub FrameRate: u32,
+    pub Shutter: u32,
+    pub EDRShutter: u32,
+    pub PostTrigger: u32,
+    pub FrameDelay: u32,
+    pub bEnableColor: u32,
+    pub CameraVersion: u32,
+    pub FirmwareVersion: u32,
+    pub SoftwareVersion: u32,
+    pub RecordingTimeZone: i32,
+    pub CFA: u32,
+    pub Bright: i32,
+    pub Contrast: i32,
+    pub Gamma: i32,
+    pub Res21: u32,
+    pub AutoExpLevel: u32,
+    pub AutoExpSpeed: u32,
+    pub AutoExpRect: Rect,
+    pub WBGain: [WBGain; 4],
+    pub Rotate: i32,
+    pub WBView: WBGain,
+    pub RealBPP: u32,
+    pub Conv8Min: u32,
+    pub Conv8Max: u32,
+    pub FilterCode: i32,
+    pub FilterParam: i32,
+    pub UF: IMFilter,
+    pub BlackCalSVer: u32,
+    pub WhiteCalSVer: u32,
+    pub GrayCalSVer: u32,
+    pub bStampTime: u32, // these are bool32_t in the spec
+    pub SoundDest: u32,
+    pub FRPSteps: u32,
+    pub FRPImgNr: [i32; 16],
+    pub FRPRate: [u32; 16],
+    pub FRPExp: [u32; 16],
+    pub MCCnt: i32,
+    pub MCPercent: [f32; 64],
+    pub CICalib: u32,
+    pub CalibWidth: u32,
+    pub CalibHeight: u32,
+    pub CalibRate: u32,
+    pub CalibExp: u32,
+    pub CalibEDR: u32,
+    pub CalibTemp: u32,
+    pub HeadSerial: [u32; 4],
+    pub RangeCode: u32,
+    pub RangeSize: u32,
+    pub Decimation: u32,
+    pub MasterSerial: u32,
+    pub Sensor: u32,
+    pub ShutterNs: u32,
+    pub EDRShutterNs: u32,
+    pub FrameDelayNs: u32,
+    pub ImPosXAcq: u32,
+    pub ImPosYAcq: u32,
+    pub ImWidthAcq: u32,
+    pub ImHeightAcq: u32,
+    pub Description: [u8; MAXLENDESCRIPTION],
+    pub RisingEdge: u32, // these are bool32_t in the spec
+    pub FilterTime: u32,
+    pub LongReady: u32,  // these are bool32_t in the spec
+    pub ShutterOff: u32, // these are bool32_t in the spec
+    pub Res4: [u8; 16],
+    pub bMetaWB: u32, // these are bool32_t in the spec
+    pub Hue: i32,
+    pub BlackLevel: i32,
+    pub WhiteLevel: i32,
+    pub LensDescription: [u8; 256],
+    pub LensAperture: f32,
+    pub LensFocusDistance: f32,
+    pub LensFocalLength: f32,
+    pub fOffset: f32,
+    pub fGain: f32,
+    pub fSaturation: f32,
+    pub fHue: f32,
+    pub fGamma: f32,
+    pub fGammaR: f32,
+    pub fGammaB: f32,
+    pub fFlare: f32,
+    pub fPedestalR: f32,
+    pub fPedestalG: f32,
+    pub fPedestalB: f32,
+    pub fChroma: f32,
+    pub ToneLabel: [u8; 256],
+    pub TonePoints: i32,
+    pub fTone: [f32; 64],
+    pub UserMatrixLabel: [u8; 256],
+    pub EnableMatrices: u32, // these are bool32_t in the spec
+    pub cmUser: [f32; 9],
+    pub EnableCrop: u32, // these are bool32_t in the spec
+    pub CropRect: Rect,
+    pub EnableResample: u32, // these are bool32_t in the spec
+    pub ResampleWidth: u32,
+    pub ResampleHeight: u32,
+    pub fGain16_8: f32,
+    pub FRPShape: [u32; 16],
+    pub TrigTC: TC,
+    pub fPbRate: f32,
+    pub fTcRate: f32,
+    pub CineName: [u8; 256],
+    pub fGainR: f32,
+    pub fGainG: f32,
+    pub fGainB: f32,
+    pub cmCalib: [f32; 9],
+    pub fWBTemp: f32,
+    pub fWBCc: f32,
+    pub CalibrationInfo: [u8; 1024],
+    pub OpticalFilter: [u8; 1024],
+    pub GpsInfo: [u8; MAXSTDSTRSZ],
+    pub Uuid: [u8; MAXSTDSTRSZ],
+    pub CreatedBy: [u8; MAXSTDSTRSZ],
+    pub RecBPP: u32,
+    pub LowestFormatBPP: u16,
+    pub LowestFormatQ: u16,
+    pub fToe: f32,
+    pub LogMode: u32,
+    pub CameraModel: [u8; MAXSTDSTRSZ],
+    pub WBType: u32,
+    pub fDecimation: u32,
+    pub MagSerial: f32,
+    pub CSSerial: u32,
+    pub dFrameRate: f64,
+    pub SensorMode: u32,
+    pub UndecFirst: u32,
+    pub SupportsBinning: u32, // these are bool32_t in the spec
+    pub UvSensor: u32,        // these are bool32_t in the spec
+    pub AnaDaqDescription: [u8; MAXSTDSTRSZ_128],
+    pub BinDaqDescription: [u8; MAXSTDSTRSZ_128],
+    pub DaqOptions: u32, // these are bool32_t in the spec
+    pub SensorOptions: u32,
+}
+
+// This only gets used to read the data from the file, because Phantom file formats are packed to reduce size.
+// This is good for size, bad for memory safety when accessing the fields. "Setup" is the runtime structure.
+#[repr(C, packed(1))]
+#[derive(Debug, Clone, Copy)]
+pub struct PackedSetup {
+    pub FrameRate16: u16,
+    pub Shutter16: u16,
+    pub PostTrigger16: u16,
+    pub FrameDelay16: u16,
+    pub AspectRatio: u16,
+    pub Res7: u16,
+    pub Res8: u16,
+    pub Res9: u8,
+    pub Res10: u8,
+    pub Res11: u8,
+    pub TrigFrame: u8,
+    pub Res12: u8,
+    pub DescriptionOld: [u8; MAXLENDESCRIPTION_OLD],
+    pub Mark: u16,
+    pub Length: u16,
+    pub Res13: u16,
+    pub SigOption: u16,
+    pub BinChannels: i16,
+    pub SamplesPerImage: u8,
+    pub BinName: [[u8; 11]; 8],
+    pub AnaOption: u16,
+    pub AnaChannels: i16,
+    pub Res6: u8,
+    pub AnaBoard: u8,
+    pub ChOption: [i16; 8],
+    pub AnaGain: [f32; 8],
+    pub AnaUnit: [[u8; 6]; 8],
+    pub AnaName: [[u8; 11]; 8],
+    pub lFirstImage: i32,
+    pub dwImageCount: u32,
+    pub nQFactor: i16,
+    pub wCineFileType: u16,
+    pub szCinePath: [[u8; OLDMAXFILENAME]; 4],
+    pub Res14: u16,
+    pub Res15: u8,
+    pub Res16: u8,
+    pub Res17: u16,
+    pub Res18: f64,
+    pub Res19: f64,
+    pub Res20: u16,
+    pub Res1: i32,
+    pub Res2: i32,
+    pub Res3: i32,
+    pub ImWidth: u16,
+    pub ImHeight: u16,
+    pub EDRShutter16: u16,
+    pub Serial: u32,
+    pub Saturation: i32,
+    pub Res5: u8,
+    pub AutoExposure: u32,
+    pub bFlipH: u32, // these are bool32_t in the spec
+    pub bFlipV: u32, // these are bool32_t in the spec
+    pub Grid: u32,
+    pub FrameRate: u32,
+    pub Shutter: u32,
+    pub EDRShutter: u32,
+    pub PostTrigger: u32,
+    pub FrameDelay: u32,
+    pub bEnableColor: u32,
+    pub CameraVersion: u32,
+    pub FirmwareVersion: u32,
+    pub SoftwareVersion: u32,
+    pub RecordingTimeZone: i32,
+    pub CFA: u32,
+    pub Bright: i32,
+    pub Contrast: i32,
+    pub Gamma: i32,
+    pub Res21: u32,
+    pub AutoExpLevel: u32,
+    pub AutoExpSpeed: u32,
+    pub AutoExpRect: Rect,
+    pub WBGain: [WBGain; 4],
+    pub Rotate: i32,
+    pub WBView: WBGain,
+    pub RealBPP: u32,
+    pub Conv8Min: u32,
+    pub Conv8Max: u32,
+    pub FilterCode: i32,
+    pub FilterParam: i32,
+    pub UF: IMFilter,
+    pub BlackCalSVer: u32,
+    pub WhiteCalSVer: u32,
+    pub GrayCalSVer: u32,
+    pub bStampTime: u32, // these are bool32_t in the spec
+    pub SoundDest: u32,
+    pub FRPSteps: u32,
+    pub FRPImgNr: [i32; 16],
+    pub FRPRate: [u32; 16],
+    pub FRPExp: [u32; 16],
+    pub MCCnt: i32,
+    pub MCPercent: [f32; 64],
+    pub CICalib: u32,
+    pub CalibWidth: u32,
+    pub CalibHeight: u32,
+    pub CalibRate: u32,
+    pub CalibExp: u32,
+    pub CalibEDR: u32,
+    pub CalibTemp: u32,
+    pub HeadSerial: [u32; 4],
+    pub RangeCode: u32,
+    pub RangeSize: u32,
+    pub Decimation: u32,
+    pub MasterSerial: u32,
+    pub Sensor: u32,
+    pub ShutterNs: u32,
+    pub EDRShutterNs: u32,
+    pub FrameDelayNs: u32,
+    pub ImPosXAcq: u32,
+    pub ImPosYAcq: u32,
+    pub ImWidthAcq: u32,
+    pub ImHeightAcq: u32,
+    pub Description: [u8; MAXLENDESCRIPTION],
+    pub RisingEdge: u32, // these are bool32_t in the spec
+    pub FilterTime: u32,
+    pub LongReady: u32,  // these are bool32_t in the spec
+    pub ShutterOff: u32, // these are bool32_t in the spec
+    pub Res4: [u8; 16],
+    pub bMetaWB: u32, // these are bool32_t in the spec
+    pub Hue: i32,
+    pub BlackLevel: i32,
+    pub WhiteLevel: i32,
+    pub LensDescription: [u8; 256],
+    pub LensAperture: f32,
+    pub LensFocusDistance: f32,
+    pub LensFocalLength: f32,
+    pub fOffset: f32,
+    pub fGain: f32,
+    pub fSaturation: f32,
+    pub fHue: f32,
+    pub fGamma: f32,
+    pub fGammaR: f32,
+    pub fGammaB: f32,
+    pub fFlare: f32,
+    pub fPedestalR: f32,
+    pub fPedestalG: f32,
+    pub fPedestalB: f32,
+    pub fChroma: f32,
+    pub ToneLabel: [u8; 256],
+    pub TonePoints: i32,
+    pub fTone: [f32; 64],
+    pub UserMatrixLabel: [u8; 256],
+    pub EnableMatrices: u32, // these are bool32_t in the spec
+    pub cmUser: [f32; 9],
+    pub EnableCrop: u32, // these are bool32_t in the spec
+    pub CropRect: Rect,
+    pub EnableResample: u32, // these are bool32_t in the spec
+    pub ResampleWidth: u32,
+    pub ResampleHeight: u32,
+    pub fGain16_8: f32,
+    pub FRPShape: [u32; 16],
+    pub TrigTC: TC,
+    pub fPbRate: f32,
+    pub fTcRate: f32,
+    pub CineName: [u8; 256],
+    pub fGainR: f32,
+    pub fGainG: f32,
+    pub fGainB: f32,
+    pub cmCalib: [f32; 9],
+    pub fWBTemp: f32,
+    pub fWBCc: f32,
+    pub CalibrationInfo: [u8; 1024],
+    pub OpticalFilter: [u8; 1024],
+    pub GpsInfo: [u8; MAXSTDSTRSZ],
+    pub Uuid: [u8; MAXSTDSTRSZ],
+    pub CreatedBy: [u8; MAXSTDSTRSZ],
+    pub RecBPP: u32,
+    pub LowestFormatBPP: u16,
+    pub LowestFormatQ: u16,
+    pub fToe: f32,
+    pub LogMode: u32,
+    pub CameraModel: [u8; MAXSTDSTRSZ],
+    pub WBType: u32,
+    pub fDecimation: u32,
+    pub MagSerial: f32,
+    pub CSSerial: u32,
+    pub dFrameRate: f64,
+    pub SensorMode: u32,
+    pub UndecFirst: u32,
+    pub SupportsBinning: u32, // these are bool32_t in the spec
+    pub UvSensor: u32,        // these are bool32_t in the spec
+    pub AnaDaqDescription: [u8; MAXSTDSTRSZ_128],
+    pub BinDaqDescription: [u8; MAXSTDSTRSZ_128],
+    pub DaqOptions: u32, // these are bool32_t in the spec
+    pub SensorOptions: u32,
+}

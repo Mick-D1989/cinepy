@@ -1,0 +1,8 @@
+/files
+/target
+/.venv
+*.so
+*__pycache__
+.pytest_cache
+
+*.pdf
