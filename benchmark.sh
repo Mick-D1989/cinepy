@@ -1,9 +1,6 @@
  #!/bin/sh
 source .venv/bin/activate
 
-make clean
-make python-release
-
 echo "Testing cinepy rust-python code on .cine file"
 python -m timeit --number 100 --setup 'import cine_py; import random; cine_file = cine_py.CineFile("/mnt/g/Programming/cinepy/files/temp.cine");' 'cine_file.get_frame(random.randint(0, 7400))'
 echo

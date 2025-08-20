@@ -14,6 +14,11 @@ python-release:
 python-test:python-dev
 	uv pip install -r crates/cine-py/python/tests/requirements.txt
 	pytest crates/cine-py/python/tests
+
+python-test-release:python-release
+	uv pip install -r crates/cine-py/python/tests/requirements.txt
+	pytest crates/cine-py/python/tests
+	./benchmark.sh
 	
 clean:
 	rm -rf target
