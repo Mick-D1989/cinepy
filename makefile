@@ -18,6 +18,8 @@ python-test:python-dev
 python-test-release:python-release
 	uv pip install -r crates/cine-py/python/tests/requirements.txt
 	pytest crates/cine-py/python/tests
+
+python-test-benchmark:python-test-release
 	./benchmark.sh > benchmark_result_$$(date +"%Y-%m-%d_%H:%M:%S")
 	
 clean:

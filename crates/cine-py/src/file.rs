@@ -1,3 +1,4 @@
+use crate::decompress::{Decompress, Decompression};
 use crate::{cine, conversions};
 use image::{ImageBuffer, Luma};
 use pyo3::prelude::*;
@@ -89,17 +90,20 @@ impl CineFile {
         let mut pixel_buffer = vec![0u8; pixel_buffer_size as usize];
         self.file.read_exact(&mut pixel_buffer).unwrap();
 
-        let mut unpacked_pixels: Vec<u16> = conversions::decompress_10bit_packed(&pixel_buffer);
+        // let mut corrected_pixels: Vec<u16> = conversions::decompress_10bit_packed(&pixel_buffer);
+        let mut corrected_pixels: Vec<u16> =
+            Decompression::decompress(&self.bitmap_info_header, &pixel_buffer).unwrap();
+
         let width: u32 = self.bitmap_info_header.bi_width as u32;
         let height: u32 = self.bitmap_info_header.bi_height as u32;
 
         if self.setup.bFlipV == 1 {
-            conversions::flip_vertical_16bit(&mut unpacked_pixels, width, height);
+            conversions::flip_vertical_16bit(&mut corrected_pixels, width, height);
         }
 
-        conversions::apply_lut_10_to_12(&mut unpacked_pixels);
-        conversions::grayscale_10_to_16bit(&mut unpacked_pixels);
-        unpacked_pixels
+        conversions::apply_lut_10_to_12(&mut corrected_pixels);
+        conversions::grayscale_10_to_16bit(&mut corrected_pixels);
+        corrected_pixels
     }
 
     fn save_single_frame(&mut self, frame_no: i32, out_path: String) {
