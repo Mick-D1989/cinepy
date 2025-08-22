@@ -87,21 +87,13 @@ pub fn decompress_10bit_packed(data: &[u8]) -> Vec<u16> {
 
 pub fn grayscale_10_to_16bit(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
     for pixel in pixels_10bit.iter_mut() {
-        // Convert from 10-bits to fill the u16.
+        // Convert from 10-bits to 16-bits.
+        // Since the most significant 6 bits will always be empty in the 10-bit file,
+        // this remains a linear scaling transformation, ie. pix << n == pix * (2^n).
         *pixel <<= 6;
     }
     pixels_10bit
 }
-
-// pub fn apply_lut_10_to_12(pixels_10bit: &mut [u16]) -> Vec<u16> {
-//     pixels_10bit
-//         .iter()
-//         .map(|&val| {
-//             let clamped = val.min(1023); // ensure valid index
-//             LUT_10_TO_12[clamped as usize]
-//         })
-//         .collect()
-// }
 
 pub fn apply_lut_10_to_12(pixels: &mut [u16]) {
     for pixel in pixels.iter_mut() {

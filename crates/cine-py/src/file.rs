@@ -39,14 +39,20 @@ impl CineFile {
 
         // Read frame offsets
         let image_count = header.image_count as usize;
-        let mut p_images = vec![0i64; image_count];
         file.seek(SeekFrom::Start(header.offset_image_offsets as u64))
             .unwrap();
-        for image in p_images.iter_mut().take(image_count) {
-            let mut buf = [0u8; 8];
-            file.read_exact(&mut buf).unwrap();
-            *image = i64::from_le_bytes(buf);
-        }
+
+        let total_bytes = image_count
+            .checked_mul(std::mem::size_of::<i64>())
+            .expect("Image count is too large");
+
+        let mut buffer = vec![0u8; total_bytes];
+        file.read_exact(&mut buffer).unwrap();
+
+        let p_images: Vec<i64> = buffer
+            .chunks_exact(8)
+            .map(|chunk| i64::from_le_bytes(chunk.try_into().unwrap()))
+            .collect();
 
         Self {
             file,
