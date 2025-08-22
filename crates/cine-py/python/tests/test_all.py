@@ -4,8 +4,8 @@ import numpy as np
 import cv2
 
 temp="temp"
-fPth = f"./cinepy/files/{temp}.cine"
-save_path=f"./cinepy/files/{temp}.png"
+fPth = f"./files/{temp}.cine"
+save_path=f"./files/{temp}.png"
 
 def test_open():
     cine_file = cine_py.CineFile(fPth)
