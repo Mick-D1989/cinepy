@@ -1,4 +1,4 @@
-use crate::decompress::{Decompress, Decompression};
+use crate::decompress::Decompression;
 use crate::{cine, conversions};
 use image::{ImageBuffer, Luma};
 use pyo3::prelude::*;
@@ -15,7 +15,8 @@ pub struct CineFile {
     pub bitmap_info_header: cine::BitmapInfoHeader,
     #[pyo3(get)]
     pub setup: cine::Setup,
-    pub p_images: Vec<i64>,
+    p_images: Vec<i64>,
+    compression: Decompression,
 }
 
 // Implimentation for reading the file and setting the header info
@@ -55,12 +56,15 @@ impl CineFile {
             .map(|chunk| i64::from_le_bytes(chunk.try_into().unwrap()))
             .collect();
 
+        let compression = Decompression::get_decompression_type(&bitmap.bi_compression).unwrap();
+
         Self {
             file,
             cine_file_header: header,
             bitmap_info_header: bitmap,
             setup,
             p_images,
+            compression,
         }
     }
 
@@ -92,7 +96,7 @@ impl CineFile {
 
         // let mut corrected_pixels: Vec<u16> = conversions::decompress_10bit_packed(&pixel_buffer);
         let mut corrected_pixels: Vec<u16> =
-            Decompression::decompress(&self.bitmap_info_header, &pixel_buffer).unwrap();
+            Decompression::decompress(&self.compression, &pixel_buffer).unwrap();
 
         let width: u32 = self.bitmap_info_header.bi_width as u32;
         let height: u32 = self.bitmap_info_header.bi_height as u32;

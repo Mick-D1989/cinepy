@@ -39,7 +39,7 @@ def test_pix_length():
 def test_save_file():
     import os
     cine_file = cine_py.CineFile(fPth)
-    frame_no=10
+    frame_no=35
     cine_file.save_single_frame(frame_no, save_path)
 
     assert(os.path.exists(save_path))
