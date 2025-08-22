@@ -1,0 +1,9 @@
+Testing cinepy rust-python code on .cine file
+100 loops, best of 5: 17.2 msec per loop
+
+Testing OpenCV on .mp4 file.
+100 loops, best of 5: 31.3 msec per loop
+
+Testing pycine python code on .cine file
+100 loops, best of 5: 17.2 msec per loop
+
