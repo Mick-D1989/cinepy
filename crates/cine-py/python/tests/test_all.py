@@ -34,6 +34,8 @@ def test_setup():
     assert(cine_file.setup.dFrameRate == 71000.0)
     assert(cine_file.setup.RealBPP == 10)
     assert(cine_file.setup.RecBPP == 12)
+    assert(cine_file.setup.ImWidth == cine_file.bitmap_info_header.bi_width)
+    assert(cine_file.setup.ImHeight == cine_file.bitmap_info_header.bi_height)
 
 def test_pix_length():
     cine_file = cine_py.CineFile(fPth)

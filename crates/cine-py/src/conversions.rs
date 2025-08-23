@@ -1,6 +1,6 @@
 use std::fmt::Error;
 
-use crate::lut::LUT_10_TO_12;
+use crate::{cine, file::CineFile, lut::LUT_10_TO_12};
 
 pub enum ColorFilterArray {
     Gray,        // 0 - gray sensor
@@ -65,34 +65,25 @@ impl ColorFilterArray {
     fn grayscale_10_to_16bit(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
         for pixel in pixels_10bit.iter_mut() {
             // 10-bit packed set black level at 64 and white level at 1014
-            if *pixel > 1014 {
-                *pixel = 1024
-            } else if *pixel < 64 {
-                *pixel = 0
-            }
-            // Clamp the value to ensure it's a valid index for the LUT
-            let clamped = (*pixel).min(1023);
+            // if *pixel > 1014 {
+            //     *pixel = 1023
+            // } else if *pixel < 64 {
+            //     *pixel = 0
+            // }
+            // // Clamp the value to ensure it's a valid index for the LUT
+            // let clamped = (*pixel).min(1023);
 
-            // Overwrite the original value with the new value from the LUT
-            *pixel = LUT_10_TO_12[clamped as usize];
-            // Convert from 10-bits to 16-bits.
-            // Since the most significant 6 bits will always be empty in the 10-bit file,
+            // // Overwrite the original value with the new value from the LUT.
+            // // converts from 10-bits packed to 12-bits linear
+            // *pixel = LUT_10_TO_12[clamped as usize];
+            // Convert from 12-bits to 16-bits.
+            // Since the most significant 4 bits will always be empty in the 12-bit linear conversion,
             // this remains a linear scaling transformation, ie. pix << n == pix * (2^n).
             *pixel <<= 6;
         }
         pixels_10bit
     }
 }
-
-// pub fn apply_lut_10_to_12(pixels: &mut [u16]) {
-//     for pixel in pixels.iter_mut() {
-//         // Clamp the value to ensure it's a valid index for the LUT
-//         let clamped = (*pixel).min(1023);
-
-//         // Overwrite the original value with the new value from the LUT
-//         *pixel = LUT_10_TO_12[clamped as usize];
-//     }
-// }
 
 pub fn flip_vertical_16bit(data: &mut [u16], width: u32, height: u32) {
     let row_len: usize = width as usize;
@@ -103,4 +94,11 @@ pub fn flip_vertical_16bit(data: &mut [u16], width: u32, height: u32) {
             data.swap(top_row + x, bottom_row + x);
         }
     }
+}
+
+pub fn apply_gamma<'a>(cine_file: &CineFile, linear_pixels: &'a mut Vec<u16>) -> &'a Vec<u16> {
+    for pixel in linear_pixels.iter_mut() {
+        *pixel = (*pixel as f32).powf(1.0 / cine_file.setup.fGamma).round() as u16
+    }
+    linear_pixels
 }

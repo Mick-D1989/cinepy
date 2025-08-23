@@ -1,9 +1,8 @@
 use crate::cine;
-use crate::conversions::ColorFilterArray;
+use crate::conversions::{apply_gamma, ColorFilterArray};
 use crate::decompress::Decompression;
 use image::{ImageBuffer, Luma};
 use pyo3::prelude::*;
-use std::ffi::c_float;
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::mem;
@@ -115,8 +114,8 @@ impl CineFile {
     fn save_single_frame(&mut self, frame_no: i32, out_path: String) {
         let width: u32 = self.bitmap_info_header.bi_width as u32;
         let height: u32 = self.bitmap_info_header.bi_height as u32;
-        let pixels = CineFile::get_frame(self, frame_no);
-
+        let mut pixels: Vec<u16> = CineFile::get_frame(self, frame_no);
+        // apply_gamma(self, &mut pixels);
         let img: ImageBuffer<Luma<u16>, Vec<u16>> =
             ImageBuffer::<Luma<u16>, Vec<u16>>::from_vec(width, height, pixels).expect("pls work?");
 
