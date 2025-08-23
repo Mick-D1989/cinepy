@@ -13,15 +13,15 @@ impl Decompression {
             _ => Err(Error),
         }
     }
-    pub fn decompress(&self, data: &Vec<u8>) -> Result<Vec<u16>, Error> {
+    pub fn decompress(&self, data: &[u8]) -> Result<Vec<u16>, Error> {
         match self {
-            Decompression::Packed10Bit => Ok(Decompression::decompress_10bit_packed(data)),
-            Decompression::Packed12Bit => Ok(Decompression::decompress_12bit_packed(data)),
+            Self::Packed10Bit => Ok(Self::decompress_10bit_packed(data)),
+            Self::Packed12Bit => Ok(Self::decompress_12bit_packed(data)),
         }
     }
     /// Unpack 10-bit packed Bayer/greyscale into Vec<u16>
     /// bi_compression=256 means that there is 4 pixles of 10-bit data stored in 5 bytes(40-bits).
-    fn decompress_10bit_packed(data: &Vec<u8>) -> Vec<u16> {
+    fn decompress_10bit_packed(data: &[u8]) -> Vec<u16> {
         let mut out: Vec<u16> = Vec::with_capacity(data.len() * 4 / 5);
 
         let mut i: usize = 0;
@@ -45,7 +45,7 @@ impl Decompression {
 
     /// Unpack 12-bit packed Bayer/greyscale into Vec<u16>
     /// bi_compression=1024 means that there is 2 pixles of 12-bit data stored in 3 bytes(24-bits).
-    fn decompress_12bit_packed(data: &Vec<u8>) -> Vec<u16> {
+    fn decompress_12bit_packed(data: &[u8]) -> Vec<u16> {
         let mut out = Vec::with_capacity(data.len() * 2 / 3);
         let mut i: usize = 0;
         while i + 3 < data.len() {

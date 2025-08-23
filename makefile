@@ -20,7 +20,7 @@ python-test-release:python-release
 	pytest crates/cine-py/python/tests
 
 python-test-benchmark:python-test-release
-	./benchmark.sh > benchmark_result_$$(date +"%Y-%m-%d_%H:%M:%S")
+	./benchmark.sh > benchmark_result_$$(date +"%Y%m%d_%H-%M-%S")
 	
 clean:
 	rm -rf target

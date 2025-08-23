@@ -1,7 +1,9 @@
+use crate::cine;
+use crate::conversions::ColorFilterArray;
 use crate::decompress::Decompression;
-use crate::{cine, conversions};
 use image::{ImageBuffer, Luma};
 use pyo3::prelude::*;
+use std::ffi::c_float;
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::mem;
@@ -16,7 +18,9 @@ pub struct CineFile {
     #[pyo3(get)]
     pub setup: cine::Setup,
     p_images: Vec<i64>,
-    compression: Decompression,
+    compression_type: Decompression,
+    cfa: ColorFilterArray,
+    flip: u32,
 }
 
 // Implimentation for reading the file and setting the header info
@@ -26,23 +30,25 @@ impl CineFile {
     pub fn new(path: &str) -> Self {
         let mut file = File::open(path).unwrap();
         // Read CINEFILEHEADER
-        let header: cine::CineFileHeader = read_structs(&mut file).unwrap();
+        let cine_file_header: cine::CineFileHeader = read_structs(&mut file).unwrap();
 
         // Read BITMAPINFOHEADER
-        file.seek(SeekFrom::Start(header.offset_image_header as u64))
+        file.seek(SeekFrom::Start(cine_file_header.offset_image_header as u64))
             .unwrap();
-        let bitmap: cine::BitmapInfoHeader = read_structs(&mut file).unwrap();
+        let bitmap_info_header: cine::BitmapInfoHeader = read_structs(&mut file).unwrap();
 
         // Read SETUP
-        file.seek(SeekFrom::Start(header.offset_setup as u64))
+        file.seek(SeekFrom::Start(cine_file_header.offset_setup as u64))
             .unwrap();
         let packed_setup: cine::PackedSetup = read_structs(&mut file).unwrap();
         let setup: cine::Setup = cine::Setup::from(packed_setup);
 
         // Read frame offsets
-        let image_count = header.image_count as usize;
-        file.seek(SeekFrom::Start(header.offset_image_offsets as u64))
-            .unwrap();
+        let image_count = cine_file_header.image_count as usize;
+        file.seek(SeekFrom::Start(
+            cine_file_header.offset_image_offsets as u64,
+        ))
+        .unwrap();
 
         let total_bytes = image_count
             .checked_mul(std::mem::size_of::<i64>())
@@ -56,15 +62,18 @@ impl CineFile {
             .map(|chunk| i64::from_le_bytes(chunk.try_into().unwrap()))
             .collect();
 
-        let compression = Decompression::get_decompression_type(&bitmap.bi_compression).unwrap();
-
         Self {
             file,
-            cine_file_header: header,
-            bitmap_info_header: bitmap,
+            cine_file_header,
+            bitmap_info_header,
             setup,
             p_images,
-            compression,
+            compression_type: Decompression::get_decompression_type(
+                &bitmap_info_header.bi_compression,
+            )
+            .unwrap(),
+            cfa: ColorFilterArray::get_cfa(&setup.CFA).unwrap(),
+            flip: setup.bFlipV,
         }
     }
 
@@ -85,7 +94,7 @@ impl CineFile {
         self.file.read_exact(&mut anno_offset_buf).unwrap();
         let offset_to_pixels = u32::from_le_bytes(anno_offset_buf);
 
-        // Get the pixels
+        // Get the raw pixels
         self.file
             .seek(SeekFrom::Start(
                 (annotations_loc + offset_to_pixels as i64) as u64,
@@ -94,20 +103,13 @@ impl CineFile {
         let mut pixel_buffer = vec![0u8; pixel_buffer_size as usize];
         self.file.read_exact(&mut pixel_buffer).unwrap();
 
-        // let mut corrected_pixels: Vec<u16> = conversions::decompress_10bit_packed(&pixel_buffer);
-        let mut corrected_pixels: Vec<u16> =
-            Decompression::decompress(&self.compression, &pixel_buffer).unwrap();
+        // uncompress them into a new vector large enough to hold the decompressed pixels
+        let mut decompressed_pixels =
+            Decompression::decompress(&self.compression_type, &pixel_buffer).unwrap();
+        // apply corrections to the decompressed pixels
+        ColorFilterArray::apply_color_array(&self.cfa, &mut decompressed_pixels).unwrap();
 
-        let width: u32 = self.bitmap_info_header.bi_width as u32;
-        let height: u32 = self.bitmap_info_header.bi_height as u32;
-
-        if self.setup.bFlipV == 1 {
-            conversions::flip_vertical_16bit(&mut corrected_pixels, width, height);
-        }
-
-        conversions::apply_lut_10_to_12(&mut corrected_pixels);
-        conversions::grayscale_10_to_16bit(&mut corrected_pixels);
-        corrected_pixels
+        decompressed_pixels
     }
 
     fn save_single_frame(&mut self, frame_no: i32, out_path: String) {

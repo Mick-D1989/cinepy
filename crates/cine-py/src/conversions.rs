@@ -1,3 +1,5 @@
+use std::fmt::Error;
+
 use crate::lut::LUT_10_TO_12;
 
 pub enum ColorFilterArray {
@@ -17,51 +19,80 @@ pub enum ColorFilterArray {
 }
 
 impl ColorFilterArray {
-    pub fn from_u32(value: u32) -> Vec<ColorFilterArray> {
-        let mut color_filter_array = Vec::new();
-
-        // Extract CFA type from least significat byte (0xFF or 0x0000_00FF to be more explicit for u32)
+    pub fn get_cfa(value: &u32) -> Result<Self, Error> {
+        // Extract CFA type from least significat bytes (0x0000_00FF for u32)
         match value & 0x0000_00FF {
-            0x0000_0000 => color_filter_array.push(ColorFilterArray::Gray),
-            0x0000_0001 => color_filter_array.push(ColorFilterArray::Vri),
-            0x0000_0010 => color_filter_array.push(ColorFilterArray::VriV6),
-            0x0000_0011 => color_filter_array.push(ColorFilterArray::Bayer),
-            0x0000_0100 => color_filter_array.push(ColorFilterArray::BayerFlip),
-            0x0000_0101 => color_filter_array.push(ColorFilterArray::BayerFlipPb),
-            0x0000_0110 => color_filter_array.push(ColorFilterArray::BayerFlipPh),
-            _ => panic!("CFA Pattern not recognised"),
+            0 => Ok(Self::Gray),
+            1 => Ok(Self::Vri),
+            2 => Ok(Self::VriV6),
+            3 => Ok(Self::Bayer),
+            4 => Ok(Self::BayerFlip),
+            5 => Ok(Self::BayerFlipPb),
+            6 => Ok(Self::BayerFlipPh),
+            _ => Err(Error),
         }
+    }
 
+    pub fn get_color_head(value: &u32) -> Result<Self, Error> {
         // Check high byte for color/gray heads
         match value & 0xF000_0000 {
-            0x8000_0000 => color_filter_array.push(ColorFilterArray::TopLeftGray),
-            0x4000_0000 => color_filter_array.push(ColorFilterArray::TopRightGray),
-            0x2000_0000 => color_filter_array.push(ColorFilterArray::BottomLeftGray),
-            0x1000_0000 => color_filter_array.push(ColorFilterArray::BottomRightGray),
-            _ => (),
+            0b1000_0000 => Ok(Self::TopLeftGray),
+            0b0100_0000 => Ok(Self::TopRightGray),
+            0b0010_0000 => Ok(Self::BottomLeftGray),
+            0b0001_0000 => Ok(Self::BottomRightGray),
+            _ => Err(Error),
         }
-        color_filter_array
+    }
+
+    pub fn apply_color_array<'a>(&self, pixels: &'a mut Vec<u16>) -> Result<&'a Vec<u16>, Error> {
+        // The pixels need a lifetime of "a" because they are a referece from the decompression alog.
+        match self {
+            Self::Gray => Ok(Self::grayscale_10_to_16bit(pixels)),
+            Self::Vri => Err(Error),
+            Self::VriV6 => Err(Error),
+            Self::Bayer => Err(Error),
+            Self::BayerFlip => Err(Error),
+            Self::BayerFlipPb => Err(Error),
+            Self::BayerFlipPh => Err(Error),
+            Self::TopLeftGray => Err(Error),
+            Self::TopRightGray => Err(Error),
+            Self::BottomLeftGray => Err(Error),
+            Self::BottomRightGray => Err(Error),
+            _ => Err(Error),
+        }
+    }
+
+    fn grayscale_10_to_16bit(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+        for pixel in pixels_10bit.iter_mut() {
+            // 10-bit packed set black level at 64 and white level at 1014
+            if *pixel > 1014 {
+                *pixel = 1024
+            } else if *pixel < 64 {
+                *pixel = 0
+            }
+            // Clamp the value to ensure it's a valid index for the LUT
+            let clamped = (*pixel).min(1023);
+
+            // Overwrite the original value with the new value from the LUT
+            *pixel = LUT_10_TO_12[clamped as usize];
+            // Convert from 10-bits to 16-bits.
+            // Since the most significant 6 bits will always be empty in the 10-bit file,
+            // this remains a linear scaling transformation, ie. pix << n == pix * (2^n).
+            *pixel <<= 6;
+        }
+        pixels_10bit
     }
 }
 
-pub fn grayscale_10_to_16bit(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
-    for pixel in pixels_10bit.iter_mut() {
-        // Convert from 10-bits to 16-bits.
-        // Since the most significant 6 bits will always be empty in the 10-bit file,
-        // this remains a linear scaling transformation, ie. pix << n == pix * (2^n).
-        *pixel <<= 6;
-    }
-    pixels_10bit
-}
+// pub fn apply_lut_10_to_12(pixels: &mut [u16]) {
+//     for pixel in pixels.iter_mut() {
+//         // Clamp the value to ensure it's a valid index for the LUT
+//         let clamped = (*pixel).min(1023);
 
-pub fn apply_lut_10_to_12(pixels: &mut [u16]) {
-    for pixel in pixels.iter_mut() {
-        // Clamp the value to ensure it's a valid index for the LUT
-        let clamped = (*pixel).min(1023);
-        // Overwrite the original value with the new value from the LUT
-        *pixel = LUT_10_TO_12[clamped as usize];
-    }
-}
+//         // Overwrite the original value with the new value from the LUT
+//         *pixel = LUT_10_TO_12[clamped as usize];
+//     }
+// }
 
 pub fn flip_vertical_16bit(data: &mut [u16], width: u32, height: u32) {
     let row_len: usize = width as usize;

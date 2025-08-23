@@ -14,17 +14,26 @@ def test_cine_header():
     cine_file = cine_py.CineFile(fPth)
 
     assert(cine_file.cine_file_header.version == 1)
-
-def test_setup():
-    cine_file = cine_py.CineFile(fPth)
-    assert(cine_file.setup.Serial == 23907)
+    assert(cine_file.cine_file_header.compression == 0)
 
 def test_bitmap_header():
     cine_file = cine_py.CineFile(fPth)
 
     assert(cine_file.bitmap_info_header.bi_width == 768)
     assert(cine_file.bitmap_info_header.bi_height == 416)
-    
+    assert(cine_file.bitmap_info_header.bi_compression == 256)
+    assert(cine_file.bitmap_info_header.bi_bit_count == 16)
+
+def test_setup():
+    cine_file = cine_py.CineFile(fPth)
+
+    assert(cine_file.setup.Serial == 23907)
+    assert(cine_file.setup.CFA == 0)
+    assert(cine_file.setup.BlackLevel == 64)
+    assert(cine_file.setup.WhiteLevel == 1014)
+    assert(cine_file.setup.dFrameRate == 71000.0)
+    assert(cine_file.setup.RealBPP == 10)
+    assert(cine_file.setup.RecBPP == 12)
 
 def test_pix_length():
     cine_file = cine_py.CineFile(fPth)
