@@ -48,16 +48,16 @@ impl ColorFilterArray {
         // The pixels need a lifetime of "a" because they are a referece from the decompression alog.
         match self {
             Self::Gray => Ok(Self::grayscale_10_to_16bit(pixels)),
-            Self::Vri => Err(Error),
-            Self::VriV6 => Err(Error),
-            Self::Bayer => Err(Error),
-            Self::BayerFlip => Err(Error),
-            Self::BayerFlipPb => Err(Error),
-            Self::BayerFlipPh => Err(Error),
-            Self::TopLeftGray => Err(Error),
-            Self::TopRightGray => Err(Error),
-            Self::BottomLeftGray => Err(Error),
-            Self::BottomRightGray => Err(Error),
+            Self::Vri => Ok(Self::vri(pixels)),
+            Self::VriV6 => Ok(Self::vri_v6(pixels)),
+            Self::Bayer => Ok(Self::bayer(pixels)),
+            Self::BayerFlip => Ok(Self::bayer_flip(pixels)),
+            Self::BayerFlipPb => Ok(Self::bayer_flip_pb(pixels)),
+            Self::BayerFlipPh => Ok(Self::bayer_flip_ph(pixels)),
+            Self::TopLeftGray => Ok(Self::top_left_grey(pixels)),
+            Self::TopRightGray => Ok(Self::top_right_grey(pixels)),
+            Self::BottomLeftGray => Ok(Self::bottom_left_grey(pixels)),
+            Self::BottomRightGray => Ok(Self::bottom_right_grey(pixels)),
             _ => Err(Error),
         }
     }
@@ -81,6 +81,44 @@ impl ColorFilterArray {
             // this remains a linear scaling transformation, ie. pix << n == pix * (2^n).
             *pixel <<= 6;
         }
+        pixels_10bit
+    }
+
+    fn vri(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+        pixels_10bit
+    }
+
+    fn vri_v6(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+        pixels_10bit
+    }
+
+    fn bayer(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+        pixels_10bit
+    }
+
+    fn bayer_flip(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+        pixels_10bit
+    }
+
+    fn bayer_flip_pb(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+        pixels_10bit
+    }
+
+    fn bayer_flip_ph(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+        pixels_10bit
+    }
+
+    fn top_right_grey(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+        pixels_10bit
+    }
+
+    fn top_left_grey(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+        pixels_10bit
+    }
+    fn bottom_right_grey(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+        pixels_10bit
+    }
+    fn bottom_left_grey(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
         pixels_10bit
     }
 }
