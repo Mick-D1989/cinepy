@@ -27,4 +27,4 @@ rust-benchmark:
 	
 clean:
 	rm -rf target
-	uv pip uninstall cine-py
+	uv pip uninstall cine_py

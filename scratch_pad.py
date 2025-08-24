@@ -12,8 +12,8 @@ from pycine.raw import read_frames
 # 100 loops, best of 5: 14.2 msec per loop
 # python -m timeit --number 100 --setup 'import random; from pycine.raw import read_frames' 'read_frames("/mnt/g/Programming/cinepy/files/temp.cine", start_frame=random.randint(0, 7400), count=1)'
 
-temp = "temp"
-fPth = f"/mnt/g/Programming/cinepy/files/{temp}.cine"
+temp = "chart1"
+fPth = f"./files/{temp}.cine"
 cine_file = cine_py.CineFile(fPth)
 
 width, height = cine_file.bitmap_info_header.bi_width, cine_file.bitmap_info_header.bi_height
@@ -26,7 +26,7 @@ frame_bytes = cine_file.get_frame(frame_no)
 end_cine = time.perf_counter()
 
 
-cap = cv2.VideoCapture("/mnt/g/Programming/cinepy/files/temp.mp4")
+cap = cv2.VideoCapture(fPth)
 cap.set(cv2.CAP_PROP_POS_FRAMES, frame_no)
 start_cv2 = time.perf_counter()
 _, frame = cap.read()
