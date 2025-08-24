@@ -4,8 +4,9 @@ cargo-features = ["codegen-backend"]
 codegen-backend = "cranelift"
 
 [workspace]
-members = ["crates/align_from_packed", 
-    "crates/cine-py"
+members = [
+    "crates/align_from_packed", 
+    "crates/cine_py"
 ]
 resolver = "3"
 
@@ -21,4 +22,3 @@ repository = ""
 [workspace.dependencies]
 pyo3 = { version = "0.25.1", features = ["extension-module"] }
 pyo3-build-config = "0.23"
-

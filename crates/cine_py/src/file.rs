@@ -76,7 +76,7 @@ impl CineFile {
         }
     }
 
-    fn get_frame(&mut self, frame_no: i32) -> Vec<u16> {
+    pub fn get_frame(&mut self, frame_no: i32) -> Vec<u16> {
         // Check request frame actually exists, rq if it doesnt
         if frame_no > (self.cine_file_header.image_count as i32) {
             panic!("Frame requested {} does not exist in the file provided with total length of frames {}", frame_no, (self.cine_file_header.image_count-1))
@@ -111,7 +111,7 @@ impl CineFile {
         decompressed_pixels
     }
 
-    fn save_single_frame(&mut self, frame_no: i32, out_path: String) {
+    pub fn save_single_frame(&mut self, frame_no: i32, out_path: String) {
         let width: u32 = self.bitmap_info_header.bi_width as u32;
         let height: u32 = self.bitmap_info_header.bi_height as u32;
         let mut pixels: Vec<u16> = CineFile::get_frame(self, frame_no);

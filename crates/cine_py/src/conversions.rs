@@ -1,6 +1,6 @@
 use std::fmt::Error;
 
-use crate::{cine, file::CineFile, lut::LUT_10_TO_12};
+use crate::{file::CineFile, lut::LUT_10_TO_12};
 
 pub enum ColorFilterArray {
     Gray,        // 0 - gray sensor

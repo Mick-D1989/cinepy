@@ -1,14 +1,22 @@
 [package]
-name = "cine-py"
+name = "cine_py"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "cine_py"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 pyo3 = { workspace = true }
 align_from_packed = {path="../align_from_packed"}
 image = "0.25.6"
+
+[dev-dependencies]
+criterion = "0.5"
+rand = "0.8"
+
+[[bench]]
+name = "frame_return_benchmark"
+harness = false
