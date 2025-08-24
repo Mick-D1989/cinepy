@@ -1,3 +1,6 @@
+// This file contains the color correction algorithims described in
+// "Phantom SDK Cine File Format Manual Version 3.11.11.806"
+
 use std::fmt::Error;
 
 use crate::{file::CineFile, lut::LUT_10_TO_12};
@@ -33,6 +36,8 @@ impl ColorFilterArray {
         }
     }
 
+    // TODO: This is for multi-head cameras. Since I don't have any to test,
+    // this will go unimplimented. Keep the pattern here incase I need it one day.
     pub fn get_color_head(value: &u32) -> Result<Self, Error> {
         // Check high byte for color/gray heads
         match value & 0xF000_0000 {
@@ -44,7 +49,7 @@ impl ColorFilterArray {
         }
     }
 
-    pub fn apply_color_array<'a>(&self, pixels: &'a mut Vec<u16>) -> Result<&'a Vec<u16>, Error> {
+    pub fn apply_color_array<'a>(&self, pixels: &'a mut Vec<u16>) -> Result<&'a [u16], Error> {
         // The pixels need a lifetime of "a" because they are a referece from the decompression alog.
         match self {
             Self::Gray => Ok(Self::grayscale_10_to_16bit(pixels)),
@@ -62,7 +67,7 @@ impl ColorFilterArray {
         }
     }
 
-    fn grayscale_10_to_16bit(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+    fn grayscale_10_to_16bit(pixels_10bit: &mut [u16]) -> &[u16] {
         for pixel in pixels_10bit.iter_mut() {
             // 10-bit packed set black level at 64 and white level at 1014
             // if *pixel > 1014 {
@@ -84,41 +89,45 @@ impl ColorFilterArray {
         pixels_10bit
     }
 
-    fn vri(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+    // gbrg/rggb sensor
+    fn vri(pixels_10bit: &mut [u16]) -> &[u16] {
+        pixels_10bit
+    }
+    // bggr/grbg sensor
+    fn vri_v6(pixels_10bit: &mut [u16]) -> &[u16] {
+        pixels_10bit
+    }
+    // gb/rg sensor
+    fn bayer(pixels_10bit: &mut [u16]) -> &[u16] {
+        pixels_10bit
+    }
+    // rg/gb sensor
+    fn bayer_flip(pixels_10bit: &mut [u16]) -> &[u16] {
+        pixels_10bit
+    }
+    // gr/gb sensor
+    fn bayer_flip_pb(pixels_10bit: &mut [u16]) -> &[u16] {
+        pixels_10bit
+    }
+    // bg/gr sensor
+
+    fn bayer_flip_ph(pixels_10bit: &mut [u16]) -> &[u16] {
         pixels_10bit
     }
 
-    fn vri_v6(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+    // TODO: This is for multi-head cameras. Since I don't have any to test,
+    // this will go unimplimented.
+    fn top_right_grey(pixels_10bit: &mut [u16]) -> &[u16] {
         pixels_10bit
     }
 
-    fn bayer(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+    fn top_left_grey(pixels_10bit: &mut [u16]) -> &[u16] {
         pixels_10bit
     }
-
-    fn bayer_flip(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+    fn bottom_right_grey(pixels_10bit: &mut [u16]) -> &[u16] {
         pixels_10bit
     }
-
-    fn bayer_flip_pb(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
-        pixels_10bit
-    }
-
-    fn bayer_flip_ph(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
-        pixels_10bit
-    }
-
-    fn top_right_grey(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
-        pixels_10bit
-    }
-
-    fn top_left_grey(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
-        pixels_10bit
-    }
-    fn bottom_right_grey(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
-        pixels_10bit
-    }
-    fn bottom_left_grey(pixels_10bit: &mut Vec<u16>) -> &Vec<u16> {
+    fn bottom_left_grey(pixels_10bit: &mut [u16]) -> &[u16] {
         pixels_10bit
     }
 }

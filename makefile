@@ -20,7 +20,7 @@ python-test-release:python-release
 	pytest crates/cine_py/python/tests
 
 python-test-benchmark:python-test-release
-	./python_benchmark.sh > benchmark_result_$$(date +"%Y%m%d_%H-%M-%S")
+	./python_benchmark.sh > benchmark_result_$$(date +"%Y%m%d_%H-%M")
 
 rust-benchmark:
 	cargo bench -p cine_py
