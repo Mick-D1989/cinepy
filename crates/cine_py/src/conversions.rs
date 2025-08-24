@@ -8,7 +8,6 @@ use pyo3::PyErr;
 use pyo3::conversion::IntoPyObject;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
-use std::borrow::Cow;
 
 pub enum ColorFilterArray {
     Gray,        // 0 - gray sensor
@@ -31,6 +30,15 @@ pub enum ColorFilterArray {
 pub enum CFAType<'a> {
     Gray(&'a [u16]),
     Color(Vec<u16>),
+}
+
+impl<'a> CFAType<'a> {
+    pub fn unwrap(self) -> Vec<u16> {
+        match self {
+            CFAType::Gray(x) => x.to_owned(),
+            CFAType::Color(x) => x,
+        }
+    }
 }
 
 impl<'a, 'py> IntoPyObject<'py> for CFAType<'a> {

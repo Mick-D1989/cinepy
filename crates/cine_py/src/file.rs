@@ -1,8 +1,10 @@
 use crate::cine;
-use crate::conversions::{CFAType, CFAType, ColorFilterArray, apply_gamma};
+use crate::conversions::{CFAType, ColorFilterArray, apply_gamma};
 use crate::decompress::Decompression;
 use image::{Frame, ImageBuffer, Luma, Rgb, RgbImage};
+use pyo3::PyErr;
 use pyo3::prelude::*;
+use std::borrow::Cow;
 use std::fmt::Error;
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
@@ -75,14 +77,14 @@ impl CineFile {
         }
     }
 
-    pub fn get_frame<'a>(&mut self, frame_no: i32) -> Result<CFAType<'a>, Error> {
+    pub fn get_frame(&mut self, frame_no: i32) -> Result<Vec<u16>, PyErr> {
         // TODO: Split this into two functions 1) gets the raw bytes, 2) applies corrections.
 
         // TODO: Turn this into proper error handling
         // Check request frame actually exists, rq if it doesnt.
-        if frame_no >= self.cine_file_header.image_count as i32 {
-            return Err(Error);
-        }
+        // if frame_no >= self.cine_file_header.image_count as i32 {
+        //     return PyErr;
+        // }
 
         let pixel_buffer_size: u32 = self.bitmap_info_header.bi_size_image;
         // get the start byte of the image requesteds annotations
@@ -110,23 +112,22 @@ impl CineFile {
         // apply corrections to the decompressed pixels
 
         if self.setup.CFA != 0 {
-            let color_pixels =
-                ColorFilterArray::apply_color_array(&self.cfa, &mut decompressed_pixels)?;
-            Ok(color_pixels)
+            let decompressed_pixels =
+                ColorFilterArray::apply_color_array(&self.cfa, &mut decompressed_pixels).unwrap();
+            return Ok(decompressed_pixels.unwrap());
         } else {
-            let gray_pixels =
-                ColorFilterArray::apply_color_array(&self.cfa, &mut decompressed_pixels)?;
-            Ok(gray_pixels)
+            ColorFilterArray::apply_color_array(&self.cfa, &mut decompressed_pixels).unwrap();
         }
+        Ok(decompressed_pixels)
     }
 
     pub fn save_single_frame(&mut self, frame_no: i32, out_path: String) {
         let width: u32 = self.bitmap_info_header.bi_width as u32;
         let height: u32 = self.bitmap_info_header.bi_height as u32;
-        let mut pixels = CineFile::get_frame(self, frame_no);
+        let pixels = CineFile::get_frame(self, frame_no);
         // apply_gamma(self, &mut pixels);
-        let img: ImageBuffer<Luma<u16>, Vec<u16>> =
-            ImageBuffer::<Luma<u16>, Vec<u16>>::from_vec(width, height, pixels).expect("pls work?");
+        let img = ImageBuffer::<Luma<u16>, Vec<u16>>::from_vec(width, height, pixels.unwrap())
+            .expect("pls work?");
 
         img.save(out_path).expect("ohes nose");
     }
@@ -134,10 +135,10 @@ impl CineFile {
     pub fn save_single_colour_frame(&mut self, frame_no: i32, out_path: String) {
         let width: u32 = self.bitmap_info_header.bi_width as u32;
         let height: u32 = self.bitmap_info_header.bi_height as u32;
-        let mut pixels = CineFile::get_frame(self, frame_no);
+        let pixels = CineFile::get_frame(self, frame_no);
         // apply_gamma(self, &mut pixels);
-        let img: ImageBuffer<Rgb<u16>, Vec<u16>> =
-            ImageBuffer::<Rgb<u16>, Vec<u16>>::from_raw(width, height, pixels).unwrap();
+        let img =
+            ImageBuffer::<Rgb<u16>, Vec<u16>>::from_raw(width, height, pixels.unwrap()).unwrap();
 
         img.save(out_path).expect("ohes nose");
     }
