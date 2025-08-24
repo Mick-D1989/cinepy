@@ -3,7 +3,8 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::Rng;
 
 fn get_frame_benchmark(c: &mut Criterion) {
-    let mut cine_file = CineFile::new("/mnt/c/Users/micha/projects/cinepy/files/temp.cine");
+    // when this gets run from the makefile, the crates root gets set as the working dir.
+    let mut cine_file: CineFile = CineFile::new("../../files/temp.cine");
 
     c.bench_function("get_random_frame", |b| {
         b.iter_batched(
