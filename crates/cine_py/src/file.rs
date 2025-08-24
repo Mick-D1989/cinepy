@@ -1,8 +1,9 @@
 use crate::cine;
-use crate::conversions::{apply_gamma, ColorFilterArray};
+use crate::conversions::{CFAType, CFAType, ColorFilterArray, apply_gamma};
 use crate::decompress::Decompression;
-use image::{ImageBuffer, Luma};
+use image::{Frame, ImageBuffer, Luma, Rgb, RgbImage};
 use pyo3::prelude::*;
+use std::fmt::Error;
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::mem;
@@ -19,7 +20,6 @@ pub struct CineFile {
     p_images: Vec<i64>,
     compression_type: Decompression,
     cfa: ColorFilterArray,
-    flip: u32,
 }
 
 // Implimentation for reading the file and setting the header info
@@ -72,14 +72,16 @@ impl CineFile {
             )
             .unwrap(),
             cfa: ColorFilterArray::get_cfa(&setup.CFA).unwrap(),
-            flip: setup.bFlipV,
         }
     }
 
-    pub fn get_frame(&mut self, frame_no: i32) -> Vec<u16> {
-        // Check request frame actually exists, rq if it doesnt
-        if frame_no > (self.cine_file_header.image_count as i32) {
-            panic!("Frame requested {} does not exist in the file provided with total length of frames {}", frame_no, (self.cine_file_header.image_count-1))
+    pub fn get_frame<'a>(&mut self, frame_no: i32) -> Result<CFAType<'a>, Error> {
+        // TODO: Split this into two functions 1) gets the raw bytes, 2) applies corrections.
+
+        // TODO: Turn this into proper error handling
+        // Check request frame actually exists, rq if it doesnt.
+        if frame_no >= self.cine_file_header.image_count as i32 {
+            return Err(Error);
         }
 
         let pixel_buffer_size: u32 = self.bitmap_info_header.bi_size_image;
@@ -106,15 +108,22 @@ impl CineFile {
         let mut decompressed_pixels =
             Decompression::decompress(&self.compression_type, &pixel_buffer).unwrap();
         // apply corrections to the decompressed pixels
-        ColorFilterArray::apply_color_array(&self.cfa, &mut decompressed_pixels).unwrap();
 
-        decompressed_pixels
+        if self.setup.CFA != 0 {
+            let color_pixels =
+                ColorFilterArray::apply_color_array(&self.cfa, &mut decompressed_pixels)?;
+            Ok(color_pixels)
+        } else {
+            let gray_pixels =
+                ColorFilterArray::apply_color_array(&self.cfa, &mut decompressed_pixels)?;
+            Ok(gray_pixels)
+        }
     }
 
     pub fn save_single_frame(&mut self, frame_no: i32, out_path: String) {
         let width: u32 = self.bitmap_info_header.bi_width as u32;
         let height: u32 = self.bitmap_info_header.bi_height as u32;
-        let mut pixels: Vec<u16> = CineFile::get_frame(self, frame_no);
+        let mut pixels = CineFile::get_frame(self, frame_no);
         // apply_gamma(self, &mut pixels);
         let img: ImageBuffer<Luma<u16>, Vec<u16>> =
             ImageBuffer::<Luma<u16>, Vec<u16>>::from_vec(width, height, pixels).expect("pls work?");
@@ -122,19 +131,29 @@ impl CineFile {
         img.save(out_path).expect("ohes nose");
     }
 
-    // fn save_single_frame(&mut self, frame_no: i32, out_path: String) {
+    pub fn save_single_colour_frame(&mut self, frame_no: i32, out_path: String) {
+        let width: u32 = self.bitmap_info_header.bi_width as u32;
+        let height: u32 = self.bitmap_info_header.bi_height as u32;
+        let mut pixels = CineFile::get_frame(self, frame_no);
+        // apply_gamma(self, &mut pixels);
+        let img: ImageBuffer<Rgb<u16>, Vec<u16>> =
+            ImageBuffer::<Rgb<u16>, Vec<u16>>::from_raw(width, height, pixels).unwrap();
+
+        img.save(out_path).expect("ohes nose");
+    }
+    // fn save_single_colour_frame(&mut self, frame_no: i32, out_path: String) {
     //     let width: u32 = self.bitmap_info_header.bi_width as u32;
     //     let height: u32 = self.bitmap_info_header.bi_height as u32;
     //     let rgb_pixels = CineFile::get_frame(self, frame_no);
 
-    //     let mut img = RgbImage::new(width, height);
+    //     let mut img: ImageBuffer<Rgb<u16>, Vec<u16>> = ImageBuffer::new(width, height);
 
     //     for y in 0..height {
     //         for x in 0..width {
     //             let idx: usize = ((y * width + x) * 3) as usize;
-    //             let r: u8 = rgb_pixels[idx];
-    //             let g: u8 = rgb_pixels[idx + 1];
-    //             let b: u8 = rgb_pixels[idx + 2];
+    //             let r: u16 = rgb_pixels[idx];
+    //             let g: u16 = rgb_pixels[idx + 1];
+    //             let b: u16 = rgb_pixels[idx + 2];
     //             img.put_pixel(x, y, Rgb([r, g, b]));
     //         }
     //     }
@@ -150,4 +169,16 @@ fn read_structs<T: Copy, R: Read>(mut reader: R) -> io::Result<T> {
     let buffer_ptr = buffer.as_ptr() as *const T;
     let result = unsafe { buffer_ptr.read_unaligned() };
     Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+
+    fn test_tests() {
+        let a = 2;
+        let b = 5;
+        assert_eq!(a * b, 10);
+    }
 }

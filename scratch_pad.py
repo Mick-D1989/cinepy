@@ -18,41 +18,21 @@ cine_file = cine_py.CineFile(fPth)
 
 width, height = cine_file.bitmap_info_header.bi_width, cine_file.bitmap_info_header.bi_height
 
-frame_no=10
+frame_no=0
 
 start_cine = time.perf_counter()
 cine_file = cine_py.CineFile(fPth)
 frame_bytes = cine_file.get_frame(frame_no)
 end_cine = time.perf_counter()
 
-
-cap = cv2.VideoCapture(fPth)
-cap.set(cv2.CAP_PROP_POS_FRAMES, frame_no)
-start_cv2 = time.perf_counter()
-_, frame = cap.read()
-end_cv2 = time.perf_counter()
-
-
-
-start_pycine = time.perf_counter()
-raw_images, setup, bpp = read_frames(fPth, start_frame=frame_no, count=1)
-tmp_img = next(raw_images)
-end_pycine = time.perf_counter()
-
-print(f"Elapsed time cinepy: {end_cine-start_cine:.6f}")
-print(f"Elapsed time cv2: {end_cv2-start_cv2:.6f}")
-print(f"Elapsed time pycine: {end_pycine-start_pycine:.6f}")
-pass
-
-
-# frame_bytes_as_np = np.asarray(frame_bytes, dtype=np.uint16)
-# frame_bytes_as_np.shape = (height,width)
+frame_bytes_as_np = np.asarray(frame_bytes, dtype=np.uint16)
+frame_bytes_as_np.shape = (height,width)
 
 # image_opencv = cv2.normalize(frame_bytes_as_np, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-
-# cv2.imshow("Decoded Image", image_opencv)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+image_opencv = cv2.cvtColor(frame_bytes_as_np, cv2.COLOR_Bayer_gr)
+cv2.imshow("Decoded Image", image_opencv)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
 
 # assert(cine_file.cine_file_header.version)

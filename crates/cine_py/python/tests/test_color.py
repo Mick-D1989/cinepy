@@ -51,7 +51,7 @@ def test_save_file():
     import os
     cine_file = cine_py.CineFile(fPth)
     frame_no=0
-    cine_file.save_single_frame(frame_no, save_path)
+    cine_file.save_single_colour_frame(frame_no, save_path)
 
     assert(os.path.exists(save_path))
 
