@@ -5,6 +5,9 @@ list:
 build:
 	CARGO_PROFILE_DEV_CODEGEN_BACKEND=cranelift cargo +nightly build -Zcodegen-backend
 
+build-wheels:
+	maturin buil -m crates/cine_py/Cargo.toml --release
+
 python-dev:
 	maturin develop --uv -m crates/cine-py/Cargo.toml
 
