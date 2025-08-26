@@ -1,13 +1,14 @@
 use crate::cine;
 use crate::conversions::{CFAType, ColorFilterArray, apply_gamma};
 use crate::decompress::Decompression;
-use image::{Frame, ImageBuffer, Luma, Rgb, RgbImage};
+use base64::{Engine as _, engine::general_purpose};
+use image::{Frame, ImageBuffer, ImageFormat, Luma, Rgb, RgbImage};
 use pyo3::PyErr;
 use pyo3::prelude::*;
 use std::borrow::Cow;
 use std::fmt::Error;
 use std::fs::File;
-use std::io::{self, Read, Seek, SeekFrom};
+use std::io::{self, Cursor, Read, Seek, SeekFrom};
 use std::mem;
 
 #[pyclass(module = "cinepy", name = "CineFile")]
@@ -141,6 +142,18 @@ impl CineFile {
             ImageBuffer::<Rgb<u16>, Vec<u16>>::from_raw(width, height, pixels.unwrap()).unwrap();
 
         img.save(out_path).expect("ohes nose");
+    }
+
+    pub fn base64_png(&mut self, frame_no: i32) -> Result<String, PyErr> {
+        let width: u32 = self.bitmap_info_header.bi_width as u32;
+        let height: u32 = self.bitmap_info_header.bi_height as u32;
+        let pixels = CineFile::get_frame(self, frame_no).unwrap();
+        let img = ImageBuffer::<Luma<u16>, Vec<u16>>::from_vec(width, height, pixels).unwrap();
+
+        let mut img_png: Vec<u8> = Vec::new();
+        img.write_to(&mut Cursor::new(&mut img_png), ImageFormat::Png)
+            .expect("Failed to convert to png");
+        Ok(general_purpose::STANDARD.encode(img_png))
     }
     // fn save_single_colour_frame(&mut self, frame_no: i32, out_path: String) {
     //     let width: u32 = self.bitmap_info_header.bi_width as u32;

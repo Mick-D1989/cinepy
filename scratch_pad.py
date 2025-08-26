@@ -6,19 +6,24 @@ import random
 import time
 from pycine.raw import read_frames
 
-# python -m timeit --number 100 --setup 'import cine_py; import random; cine_file = cine_py.CineFile("/mnt/g/Programming/cinepy/files/temp.cine");' 'cine_file.get_frame(random.randint(0, cine_file.cine_file_header.image_count-1))'
+# python -m timeit --number 100 --setup 'import cine_py; import random; cine_file = cine_py.CineFile("./files/temp.cine");' 'cine_file.get_frame(random.randint(0, 400))'
 # 100 loops, best of 5: 75.3 msec per loop
-# python -m timeit --number 100 --setup 'import random; import cv2; cap = cv2.VideoCapture("/mnt/g/Programming/cinepy/files/temp.mp4")' 'cap.set(cv2.CAP_PROP_POS_FRAMES, random.randint(0, 7400)); cap.read()'
+# python -m timeit --number 100 --setup 'import random; import cv2; cap = cv2.VideoCapture("./files/temp.mp4")' 'cap.set(cv2.CAP_PROP_POS_FRAMES, random.randint(0, 400)); cap.read()'
 # 100 loops, best of 5: 14.2 msec per loop
-# python -m timeit --number 100 --setup 'import random; from pycine.raw import read_frames' 'read_frames("/mnt/g/Programming/cinepy/files/temp.cine", start_frame=random.randint(0, 7400), count=1)'
+# python -m timeit --number 100 --setup 'import random; from pycine.raw import read_frames' 'read_frames("./files/temp.cine", start_frame=random.randint(0, 400), count=1)'
+def utf8len(s):
+    return len(s.encode('utf-8'))
 
-temp = "chart1"
-fPth = f"./files/{temp}.cine"
+temp = "temp"
+fPth = f"/terminal_effects/src/cinepy/files/{temp}.cine"
 cine_file = cine_py.CineFile(fPth)
 
 width, height = cine_file.bitmap_info_header.bi_width, cine_file.bitmap_info_header.bi_height
 
 frame_no=0
+
+b64 = cine_file.base64_png(frame_no)
+b64_size = utf8len(b64)
 
 start_cine = time.perf_counter()
 cine_file = cine_py.CineFile(fPth)

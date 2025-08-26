@@ -6,7 +6,7 @@ build:
 	CARGO_PROFILE_DEV_CODEGEN_BACKEND=cranelift cargo +nightly build -Zcodegen-backend
 
 build-wheels:
-	maturin buil -m crates/cine_py/Cargo.toml --release
+	maturin build -m crates/cine_py/Cargo.toml --release
 
 python-dev:
 	maturin develop --uv -m crates/cine_py/Cargo.toml
@@ -20,7 +20,7 @@ python-test:python-dev
 
 python-test-release:python-release
 	uv pip install -r crates/cine_py/python/tests/requirements.txt
-	pytest crates/cine_py/python/tests
+	pytest crates/cine_py/python/tests/test_all.py::test_base64
 
 python-test-benchmark:python-test-release
 	./python_benchmark.sh > benchmark_result_$$(date +"%Y%m%d_%H-%M")

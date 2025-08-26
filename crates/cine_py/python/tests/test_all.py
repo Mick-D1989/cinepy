@@ -4,8 +4,8 @@ import numpy as np
 import cv2
 
 temp="temp"
-fPth = f"./files/{temp}.cine"
-save_path=f"./files/{temp}.png"
+fPth = f"/terminal_effects/src/cinepy/files/{temp}.cine"
+save_path=f"/terminal_effects/src/cinepy/files/{temp}.png"
 
 def test_open():
     cine_file = cine_py.CineFile(fPth)
@@ -54,6 +54,12 @@ def test_save_file():
     cine_file.save_single_frame(frame_no, save_path)
 
     assert(os.path.exists(save_path))
+
+def test_base64():
+    cine_file = cine_py.CineFile(fPth)
+    frame_no=35
+    b64 = cine_file.base64_png(frame_no)
+    assert(type(b64) == str)
 
 # def test_img_no_bytes():
 #     import numpy as np

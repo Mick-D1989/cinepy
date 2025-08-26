@@ -10,17 +10,18 @@ repository.workspace = true
 
 [lib]
 name = "cine_py"
-crate-type = [ "cdylib", "rlib" ]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3 = { version = "0.25.1", features = ["extension-module"] }
-pyo3-build-config = "0.23"
-align_from_packed = { path="../align_from_packed" }
+pyo3 = { version = "0.25.1", features = ["auto-initialize", "full"] }
+pyo3-build-config = "0.25.1"
+align_from_packed = { path = "../align_from_packed" }
 image = "0.25.6"
+base64 = "0.22.1"
 
 [dev-dependencies]
-criterion = { version ="0.5", features = [ "html_reports" ] }
-rand = { version = "0.8" }
+criterion = { version = "0.7", features = ["html_reports"] }
+rand = { version = "0.9.2" }
 
 [[bench]]
 name = "frame_return_benchmark"
