@@ -13,15 +13,10 @@ classifiers = [
 
 dynamic = ["version"]
 
-dependencies = [
-    "numpy==2.3.2",
-    "opencv-python"
-]
+dependencies = []
 
 [project.optional-dependencies]
-tests = [
-    "pytest",
-]
+tests = ["pytest"]
 [tool.maturin]
 python-source = "python"
 features = ["pyo3/extension-module"]

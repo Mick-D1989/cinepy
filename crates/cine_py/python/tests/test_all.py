@@ -7,6 +7,7 @@ temp="temp"
 fPth = f"./files/{temp}.cine"
 save_path=f"./files/{temp}.png"
 
+
 def test_open():
     cine_file = cine_py.CineFile(fPth)
 
@@ -14,17 +15,28 @@ def test_cine_header():
     cine_file = cine_py.CineFile(fPth)
 
     assert(cine_file.cine_file_header.version == 1)
-
-def test_setup():
-    cine_file = cine_py.CineFile(fPth)
-    assert(cine_file.setup.Serial == 23907)
+    assert(cine_file.cine_file_header.compression == 0)
 
 def test_bitmap_header():
     cine_file = cine_py.CineFile(fPth)
 
     assert(cine_file.bitmap_info_header.bi_width == 768)
     assert(cine_file.bitmap_info_header.bi_height == 416)
-    
+    assert(cine_file.bitmap_info_header.bi_compression == 256)
+    assert(cine_file.bitmap_info_header.bi_bit_count == 16)
+
+def test_setup():
+    cine_file = cine_py.CineFile(fPth)
+
+    assert(cine_file.setup.Serial == 23907)
+    assert(cine_file.setup.CFA == 0)
+    assert(cine_file.setup.BlackLevel == 64)
+    assert(cine_file.setup.WhiteLevel == 1014)
+    assert(cine_file.setup.dFrameRate == 71000.0)
+    assert(cine_file.setup.RealBPP == 10)
+    assert(cine_file.setup.RecBPP == 12)
+    assert(cine_file.setup.ImWidth == cine_file.bitmap_info_header.bi_width)
+    assert(cine_file.setup.ImHeight == cine_file.bitmap_info_header.bi_height)
 
 def test_pix_length():
     cine_file = cine_py.CineFile(fPth)
@@ -39,10 +51,16 @@ def test_pix_length():
 def test_save_file():
     import os
     cine_file = cine_py.CineFile(fPth)
-    frame_no=10
+    frame_no=35
     cine_file.save_single_frame(frame_no, save_path)
 
     assert(os.path.exists(save_path))
+
+def test_base64():
+    cine_file = cine_py.CineFile(fPth)
+    frame_no=35
+    b64 = cine_file.base64_png(frame_no)
+    assert(type(b64) == str)
 
 # def test_img_no_bytes():
 #     import numpy as np

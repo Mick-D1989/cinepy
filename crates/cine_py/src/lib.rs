@@ -3,6 +3,7 @@ pub mod cine;
 pub mod conversions;
 pub mod file;
 pub mod lut;
+pub mod decompress;
 
 // Formats the sum of two numbers as string.
 #[pyfunction]

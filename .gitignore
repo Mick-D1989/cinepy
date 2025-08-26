@@ -6,3 +6,6 @@
 .pytest_cache
 
 *.pdf
+
+# ignore benchmark files
+benchmark*20*

@@ -4,21 +4,17 @@ cargo-features = ["codegen-backend"]
 codegen-backend = "cranelift"
 
 [workspace]
-members = ["crates/align_from_packed", 
-    "crates/cine-py"
+members = [
+    "crates/align_from_packed", 
+    "crates/cine_py"
 ]
 resolver = "3"
 
 [workspace.package] 
 authors = ["Michael Durante <michaeldurante@hotmail.com>"]
-version = "0.0.1"
+version = "0.1.0"
 edition = "2024"
 license = "MIT"
 keywords = ["phantom", "high", "speed", "camera", "cine"]
 homepage = ""
 repository = ""
-
-[workspace.dependencies]
-pyo3 = { version = "0.25.1", features = ["extension-module"] }
-pyo3-build-config = "0.23"
-
