@@ -5,7 +5,7 @@ use rand::Rng;
 
 fn get_frame_benchmark(c: &mut Criterion) {
     // when this gets run from the makefile, the crates root gets set as the working dir.
-    let mut cine_file: CineFile = CineFile::new("/terminal_effects/src/cinepy/files/temp.cine");
+    let mut cine_file: CineFile = CineFile::new("./files/temp.cine");
 
     c.bench_function("get_random_frame", |b| {
         b.iter_batched(
@@ -23,7 +23,7 @@ fn get_frame_benchmark(c: &mut Criterion) {
 
 fn get_b64_benchmark(c: &mut Criterion) {
     // when this gets run from the makefile, the crates root gets set as the working dir.
-    let mut cine_file: CineFile = CineFile::new("/terminal_effects/src/cinepy/files/temp.cine");
+    let mut cine_file: CineFile = CineFile::new("./files/temp.cine");
 
     c.bench_function("get_b64_frame", |b| {
         b.iter_batched(

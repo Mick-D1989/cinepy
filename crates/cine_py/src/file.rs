@@ -133,27 +133,43 @@ impl CineFile {
         img.save(out_path).expect("ohes nose");
     }
 
-    pub fn save_single_colour_frame(&mut self, frame_no: i32, out_path: String) {
+    pub fn save_single_colour_frame(
+        &mut self,
+        frame_no: i32,
+        out_path: String,
+    ) -> Result<(), PyErr> {
         let width: u32 = self.bitmap_info_header.bi_width as u32;
         let height: u32 = self.bitmap_info_header.bi_height as u32;
-        let pixels = CineFile::get_frame(self, frame_no);
+        let pixels = CineFile::get_frame(self, frame_no)?;
         // apply_gamma(self, &mut pixels);
-        let img =
-            ImageBuffer::<Rgb<u16>, Vec<u16>>::from_raw(width, height, pixels.unwrap()).unwrap();
+        let img = ImageBuffer::<Rgb<u16>, Vec<u16>>::from_raw(width, height, pixels).unwrap();
 
         img.save(out_path).expect("ohes nose");
+        Ok(())
     }
 
     pub fn base64_png(&mut self, frame_no: i32) -> Result<String, PyErr> {
         let width: u32 = self.bitmap_info_header.bi_width as u32;
         let height: u32 = self.bitmap_info_header.bi_height as u32;
-        let pixels = CineFile::get_frame(self, frame_no).unwrap();
+        let pixels = CineFile::get_frame(self, frame_no)?;
         let img = ImageBuffer::<Luma<u16>, Vec<u16>>::from_vec(width, height, pixels).unwrap();
 
         let mut img_png: Vec<u8> = Vec::new();
         img.write_to(&mut Cursor::new(&mut img_png), ImageFormat::Png)
             .expect("Failed to convert to png");
         Ok(general_purpose::STANDARD.encode(img_png))
+    }
+
+    pub fn get_frame_as_png(&mut self, frame_no: i32) -> Result<Vec<u8>, PyErr> {
+        let width: u32 = self.bitmap_info_header.bi_width as u32;
+        let height: u32 = self.bitmap_info_header.bi_height as u32;
+        let pixels = CineFile::get_frame(self, frame_no)?;
+        let img = ImageBuffer::<Luma<u16>, Vec<u16>>::from_vec(width, height, pixels).unwrap();
+
+        let mut img_png: Vec<u8> = Vec::new();
+        img.write_to(&mut Cursor::new(&mut img_png), ImageFormat::Png)
+            .expect("Failed to convert to png");
+        Ok(img_png)
     }
     // fn save_single_colour_frame(&mut self, frame_no: i32, out_path: String) {
     //     let width: u32 = self.bitmap_info_header.bi_width as u32;
