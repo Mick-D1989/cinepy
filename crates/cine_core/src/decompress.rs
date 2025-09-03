@@ -3,7 +3,7 @@ use std::io::Error;
 use crate::errors::CineResult;
 use crate::file::CineFile;
 
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Decompression {
     Uncompressed,
     Packed10Bit,
@@ -35,6 +35,8 @@ impl Decompression {
         // let mut out: Vec<u16> = Vec::with_capacity(data.len() * 4 / 5);
 
         let mut i: usize = 0;
+        let mut j: usize = 0;
+
         while i + 4 < cine_file.img_byte_buffer.len() {
             // set the values for each 4 pixels. assume they're ordered as;
             // 00000000 00|000000 0000|0000 000000|00 00000000
@@ -44,18 +46,19 @@ impl Decompression {
             // --------p0------- --------p1------- --------p2------- --------p3-------
             // and;
             // p0 starts in the top left corner of the frame.
-            cine_file.pixel_buffer[i] = ((cine_file.img_byte_buffer[i] as u16) << 2)
+            cine_file.pixel_buffer[j] = ((cine_file.img_byte_buffer[i] as u16) << 2)
                 | ((cine_file.img_byte_buffer[i + 1] as u16) >> 6);
-            cine_file.pixel_buffer[i + 1] =
+            cine_file.pixel_buffer[j + 1] =
                 (((cine_file.img_byte_buffer[i + 1] & 0b0011_1111) as u16) << 4)
                     | ((cine_file.img_byte_buffer[i + 2] as u16) >> 4);
-            cine_file.pixel_buffer[i + 2] =
+            cine_file.pixel_buffer[j + 2] =
                 (((cine_file.img_byte_buffer[i + 2] & 0b0000_1111) as u16) << 6)
                     | ((cine_file.img_byte_buffer[i + 3] as u16) >> 2);
-            cine_file.pixel_buffer[i + 3] =
+            cine_file.pixel_buffer[j + 3] =
                 (((cine_file.img_byte_buffer[i + 3] & 0b0000_0011) as u16) << 8)
                     | (cine_file.img_byte_buffer[i + 4] as u16);
             i += 5;
+            j += 4;
         }
         Ok(())
     }

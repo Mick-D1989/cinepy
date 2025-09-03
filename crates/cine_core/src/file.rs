@@ -31,7 +31,7 @@ pub trait VideoOps {
     fn get_headers(&self) -> CineResult<VideoHeader>;
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData>; // Returns either a Vec<u8> or Vec<u16> in the format of bytes, PNG representation, etc
     fn encoded_as(&self, encoding: EncoderType) -> CineResult<EncoderType>;
-    fn save_frame_as(&self, f_pth: &str) -> CineResult<()>;
+    fn save_frame_as(&self, frame_no: i32, frame_type: FrameType, f_pth: &str) -> CineResult<()>;
 }
 
 pub struct VideoHeader {
@@ -94,20 +94,16 @@ impl CineFile {
             Decompression::get_decompression_type(&bitmap_info_header.bi_compression)?;
 
         let pixel_buffer = if compression_type == Decompression::Packed10Bit {
-            vec![0u16; img_byte_buffer.len() * 4 / 5]
+            vec![0u16; img_byte_buffer.capacity() * 4 / 5]
         } else if compression_type == Decompression::Packed12Bit {
-            vec![0u16; img_byte_buffer.len() * 2 / 3]
+            vec![0u16; img_byte_buffer.capacity() * 2 / 3]
         } else {
-            vec![0u16; img_byte_buffer.len()]
+            vec![0u16; img_byte_buffer.capacity()]
         };
 
         let cfa = ColorFilterArray::get_cfa(&setup.CFA).unwrap();
 
         let pixels = if cfa == ColorFilterArray::Gray {
-            assert_eq!(
-                (bitmap_info_header.bi_width * bitmap_info_header.bi_height) as usize,
-                pixel_buffer.len()
-            );
             vec![0u16; (bitmap_info_header.bi_width * bitmap_info_header.bi_height) as usize]
         } else {
             vec![0u16; (bitmap_info_header.bi_width * bitmap_info_header.bi_height * 3) as usize]
@@ -129,7 +125,7 @@ impl CineFile {
 
     pub fn get_frame(&mut self, frame_no: i32) -> CineResult<()> {
         self.get_bytes(frame_no)?;
-        Ok(self.apply_correction()?)
+        self.apply_correction()
     }
 
     fn read_structs<T: Copy, R: Read>(mut reader: R) -> CineResult<T> {
@@ -176,11 +172,29 @@ impl CineFile {
 
     fn apply_correction(&mut self) -> CineResult<()> {
         Decompression::decompress(self)?;
-        ColorFilterArray::apply_color_array(self)?;
-        Ok(())
-        // Ok(self.pixel_buffer)
+        ColorFilterArray::apply_color_array(self)
     }
 }
+
+// // This is just for benchmarking to work.
+// impl Clone for CineFile {
+//     fn clone(&self) -> Self {
+//         let file_handle = self.file.try_clone().expect("Failed to clone file handle");
+
+//         CineFile {
+//             file: file_handle,
+//             cine_file_header: self.cine_file_header.clone(),
+//             bitmap_info_header: self.bitmap_info_header.clone(),
+//             setup: self.setup.clone(),
+//             p_images: self.p_images.clone(),
+//             compression_type: self.compression_type.clone(),
+//             cfa: self.cfa.clone(),
+//             img_byte_buffer: self.img_byte_buffer.clone(),
+//             pixel_buffer: self.pixel_buffer.clone(),
+//             pixels: self.pixels.clone(),
+//         }
+//     }
+// }
 
 impl VideoOps for CineFile {
     fn get_headers(&self) -> CineResult<VideoHeader> {
@@ -198,18 +212,19 @@ impl VideoOps for CineFile {
         let height = self.bitmap_info_header.bi_height as u32;
 
         self.get_frame(frame_no)?;
-        frame_type.get_frame_as(&self.pixels, width, height)
+        frame_type.get_frame_from_frametype(&self.pixels, width, height)
     }
 
     fn encoded_as(&self, encoding: EncoderType) -> CineResult<EncoderType> {
         todo!()
     }
 
-    fn save_frame_as(&self, f_pth: &str) -> CineResult<()> {
+    fn save_frame_as(&self, frame_no: i32, frame_type: FrameType, f_pth: &str) -> CineResult<()> {
         todo!()
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Mp4File {}
 
 impl Mp4File {
@@ -228,7 +243,7 @@ impl VideoOps for Mp4File {
     fn encoded_as(&self, encoding: EncoderType) -> CineResult<EncoderType> {
         todo!()
     }
-    fn save_frame_as(&self, f_pth: &str) -> CineResult<()> {
+    fn save_frame_as(&self, frame_no: i32, frame_type: FrameType, f_pth: &str) -> CineResult<()> {
         todo!()
     }
 }

@@ -4,13 +4,70 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug Benchmark",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=frame_return_benchmark", // <-- Change this to your benchmark's name
+                    "--package=cine_core" // <-- Change this to your package's name
+                ],
+                "filter": {
+                    "name": "frame_return_benchmark", // <-- Change this to your benchmark's name
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug Unit Test",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib", // or --bin for a binary
+                    "--package=cine_core" // <-- Change this to your package's name
+                ],
+                "filter": {
+                    // To debug a specific test, add its name here.
+                    // e.g., "name": "my_specific_test_function"
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug Executable",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${cargo:program}",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=frame_decoder", // <-- Change this to your binary's name
+                    "--package=cine_core" // <-- Change this to your package's name
+                ],
+                "filter": {
+                    "name": "cine_core", // <-- Change this to your binary's name
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
