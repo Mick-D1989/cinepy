@@ -1,7 +1,7 @@
 use cine_py::file::CineFile;
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use pyo3::prelude::*;
+use criterion::{Criterion, criterion_group, criterion_main};
 use rand::Rng;
+use std::hint::black_box;
 
 fn get_frame_benchmark(c: &mut Criterion) {
     // when this gets run from the makefile, the crates root gets set as the working dir.
@@ -11,8 +11,8 @@ fn get_frame_benchmark(c: &mut Criterion) {
         b.iter_batched(
             // Setup closure: runs before each measurement.
             || {
-                let mut rng = rand::thread_rng();
-                rng.gen_range(0..400)
+                let mut rng = rand::rng();
+                rng.random_range(0..400)
             },
             // Measurement closure.
             |frame_index| cine_file.get_frame(black_box(frame_index)),
@@ -29,8 +29,8 @@ fn get_b64_benchmark(c: &mut Criterion) {
         b.iter_batched(
             // Setup closure: runs before each measurement.
             || {
-                let mut rng = rand::thread_rng();
-                rng.gen_range(0..400)
+                let mut rng = rand::rng();
+                rng.random_range(0..400)
             },
             // Measurement closure.
             |frame_index| cine_file.base64_png(black_box(frame_index)),

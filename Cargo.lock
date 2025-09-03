@@ -276,6 +276,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cine-core"
+version = "0.1.0"
+dependencies = [
+ "align_from_packed",
+ "base64",
+ "image",
+]
+
+[[package]]
 name = "cine_py"
 version = "0.1.0"
 dependencies = [
