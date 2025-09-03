@@ -26,7 +26,7 @@ python-test-benchmark:python-test-release
 	./python_benchmark.sh > benchmark_result_$$(date +"%Y%m%d_%H-%M")
 
 rust-benchmark:
-	cargo bench -p cine_py
+	cargo bench -p cine_core
 	
 clean:
 	rm -rf target

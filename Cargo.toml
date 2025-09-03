@@ -6,7 +6,7 @@ codegen-backend = "cranelift"
 [workspace]
 members = [
     "crates/align_from_packed", 
-    "crates/cine-core", 
+    "crates/cine_core", 
     "crates/cine_py"
 ]
 resolver = "3"

@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 [dependencies]
 pyo3 = { version = "0.25.1", features = ["extension-module"] }
 pyo3-build-config = "0.25.1"
-numpy = "0.26.0"
+numpy = "0.25.0"
 align_from_packed = { path = "../align_from_packed" }
 cine_core = { path = "../cine_core"}
 
