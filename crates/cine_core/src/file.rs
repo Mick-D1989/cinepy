@@ -1,7 +1,3 @@
-// Impliments State Patterns for Cine and MP4's.
-// Forces users to have a valid opened file before
-// they can call opperations on it.
-
 use crate::cine;
 use crate::conversions::ColorFilterArray;
 use crate::decompress::Decompression;
@@ -12,20 +8,6 @@ use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
 
-pub enum PixelData<'a> {
-    Borrowed(&'a mut [u16]), // grayscale, reusing decompression buffer
-    Owned(Vec<u16>),         // color, new allocation after demosaic
-}
-
-impl<'a> PixelData<'a> {
-    pub fn as_slice(&self) -> &[u16] {
-        match self {
-            PixelData::Borrowed(s) => s,
-            PixelData::Owned(v) => v.as_slice(),
-        }
-    }
-}
-
 // The operations a caller can make on a generic video type
 pub trait VideoOps {
     fn get_headers(&self) -> CineResult<VideoHeader>;
@@ -35,10 +17,10 @@ pub trait VideoOps {
 }
 
 pub struct VideoHeader {
-    file_name: String,
-    width: u32,
-    height: u32,
-    frame_count: u32,
+    pub file_name: String,
+    pub width: u32,
+    pub height: u32,
+    pub frame_count: u32,
 }
 
 pub struct CineFile {
@@ -148,27 +130,11 @@ impl CineFile {
         let offset_to_pixels = u32::from_le_bytes(anno_offset_buf);
 
         // Get the raw pixels.
-        // let pixel_buffer_size: u32 = self.bitmap_info_header.bi_size_image;
         self.file.seek(SeekFrom::Start(
             (annotations_loc + offset_to_pixels as i64) as u64,
         ))?;
-        // let mut pixel_buffer = vec![0u8; self.bitmap_info_header.bi_size_image as usize];
         Ok(self.file.read_exact(&mut self.img_byte_buffer)?)
     }
-
-    // fn apply_correction<'a>(&'a mut self) -> CineResult<()> {
-    //     // Decompress from 10-bit or 12-bit packed
-    //     let mut pixels = Decompression::decompress(&self.compression_type, &self.img_byte_buffer)?;
-
-    //     // Apply corrections and convert to 16-bit
-    //     if self.setup.CFA == 0 {
-    //         ColorFilterArray::apply_color_array(&self.cfa, &mut self.)?;
-    //         return Ok(PixelData::Borrowed(pixels).as_slice());
-    //     } else {
-    //         let color_pixels = ColorFilterArray::apply_color_array(&self.cfa, &mut pixels)?;
-    //         return Ok(color_pixels.as_slice());
-    //     }
-    // }
 
     fn apply_correction(&mut self) -> CineResult<()> {
         Decompression::decompress(self)?;
@@ -176,37 +142,16 @@ impl CineFile {
     }
 }
 
-// // This is just for benchmarking to work.
-// impl Clone for CineFile {
-//     fn clone(&self) -> Self {
-//         let file_handle = self.file.try_clone().expect("Failed to clone file handle");
-
-//         CineFile {
-//             file: file_handle,
-//             cine_file_header: self.cine_file_header.clone(),
-//             bitmap_info_header: self.bitmap_info_header.clone(),
-//             setup: self.setup.clone(),
-//             p_images: self.p_images.clone(),
-//             compression_type: self.compression_type.clone(),
-//             cfa: self.cfa.clone(),
-//             img_byte_buffer: self.img_byte_buffer.clone(),
-//             pixel_buffer: self.pixel_buffer.clone(),
-//             pixels: self.pixels.clone(),
-//         }
-//     }
-// }
-
 impl VideoOps for CineFile {
     fn get_headers(&self) -> CineResult<VideoHeader> {
         Ok(VideoHeader {
-            file_name: "placeholder.cine".to_string(), // You would get this from the path
+            file_name: "temp.cine".to_string(), // placeholder, need to drop all the null bytes from what the field actually takes
             width: self.bitmap_info_header.bi_width as u32,
             height: self.bitmap_info_header.bi_height as u32,
-            frame_count: self.cine_file_header.image_count as u32,
+            frame_count: self.cine_file_header.image_count,
         })
     }
 
-    // This is the implementation that ties everything together.
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData> {
         let width = self.bitmap_info_header.bi_width as u32;
         let height = self.bitmap_info_header.bi_height as u32;

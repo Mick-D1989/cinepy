@@ -1,10 +1,8 @@
 // This file contains the color correction algorithims described in
 // "Phantom SDK Cine File Format Manual Version 3.11.11.806"
 
-use crate::cine;
 use crate::errors::{CineError, CineResult};
 use crate::file::CineFile;
-use crate::file::PixelData;
 
 #[derive(Clone, PartialEq)]
 pub enum ColorFilterArray {
@@ -22,26 +20,6 @@ pub enum ColorFilterArray {
     BottomLeftGray,  // 0x20000000
     BottomRightGray, // 0x10000000
 }
-
-// impl<'a, 'py> IntoPyObject<'py> for CFAType<'a> {
-//     type Target = PyAny;
-//     type Output = Bound<'py, PyAny>;
-//     type Error = PyErr;
-
-//     fn into_pyobject(self, py: Python<'py>) -> PyResult<Self::Output> {
-//         match self {
-//             CFAType::Gray(slice) => {
-//                 // Expose grayscale as a Python list of ints
-//                 Ok(PyList::new(py, slice).unwrap().into_any())
-//             }
-//             CFAType::Color(vec) => {
-//                 // Each pixel is [u16; 3], Python will see it as a list of tuples/lists
-//                 Ok(PyList::new(py, vec).unwrap().into_any())
-//             }
-//         }
-//     }
-// }
-
 impl ColorFilterArray {
     pub fn get_cfa(value: &u32) -> CineResult<Self> {
         // Extract CFA type from least significat bytes (0x0000_00FF for u32)
