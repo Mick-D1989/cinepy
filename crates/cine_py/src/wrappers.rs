@@ -80,6 +80,7 @@ impl CinePy {
         let ft = frame_type.into();
 
         let frame = self.inner.get_frame_as(frame_no, ft).map_err(PyCineErr)?;
+        // Returns all types as a numpy array in python.
         Python::with_gil(|py| match frame {
             FrameData::Base64(v) => {
                 let arr = PyArray1::from_vec(py, v.into_bytes());

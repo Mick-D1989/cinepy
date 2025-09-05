@@ -1,9 +1,4 @@
-use pyo3::create_exception;
-use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
-
-// Define a base Python exception for your crate
-create_exception!(cine_py, PyCineError, PyException);
 
 pub mod wrappers;
 
