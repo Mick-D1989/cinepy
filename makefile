@@ -27,6 +27,9 @@ python-test-benchmark:python-test-release
 
 rust-benchmark:
 	cargo bench -p cine_core
+
+rust-py-benchmark:python-release
+	cargo bench -p cine_py
 	
 clean:
 	rm -rf target

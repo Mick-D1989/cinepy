@@ -10,7 +10,7 @@ repository.workspace = true
 
 [lib]
 name = "cine_py"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 pyo3 = { version = "0.25.1", features = ["extension-module"] }
@@ -21,4 +21,9 @@ cine_core = { path = "../cine_core"}
 
 [dev-dependencies]
 pyo3 = { version = "0.25.1", features = ["auto-initialize", "full"] }
+criterion = { version = "0.7", features = ["html_reports"] }
+rand = { version = "0.9.2" }
 
+[[bench]]
+name = "frame_return_benchmark"
+harness = false

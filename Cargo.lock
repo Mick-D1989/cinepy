@@ -293,9 +293,11 @@ version = "0.1.0"
 dependencies = [
  "align_from_packed",
  "cine_core",
+ "criterion",
  "numpy",
  "pyo3",
  "pyo3-build-config",
+ "rand 0.9.2",
 ]
 
 [[package]]

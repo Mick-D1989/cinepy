@@ -16,8 +16,6 @@ fn get_frame_benchmark(c: &mut Criterion) {
 
     // --- Get Frames As Benchmark Group ---
     let mut group = c.benchmark_group("Get Frames As");
-
-    // It's often useful to set a sample size for more stable results.
     group.sample_size(10);
 
     // Benchmark retrieving a frame and converting it to a PNG.
