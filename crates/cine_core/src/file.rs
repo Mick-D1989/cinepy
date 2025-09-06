@@ -3,7 +3,7 @@ use crate::conversions::ColorFilterArray;
 use crate::decompress::Decompression;
 use crate::errors::CineResult;
 use crate::exporters::FrameData;
-use crate::exporters::{EncoderType, FrameType};
+use crate::exporters::FrameType;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
@@ -12,7 +12,6 @@ use std::mem;
 pub trait VideoOps {
     fn get_headers(&self) -> CineResult<VideoHeader>;
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData>; // Returns either a Vec<u8> or Vec<u16> in the format of bytes, PNG representation, etc
-    fn encoded_as(&self, encoding: EncoderType) -> CineResult<EncoderType>;
     fn save_frame_as(&self, frame_no: i32, frame_type: FrameType, f_pth: &str) -> CineResult<()>;
 }
 
@@ -160,10 +159,6 @@ impl VideoOps for CineFile {
         frame_type.get_frame_from_frametype(&self.pixels, width, height)
     }
 
-    fn encoded_as(&self, encoding: EncoderType) -> CineResult<EncoderType> {
-        todo!()
-    }
-
     fn save_frame_as(&self, frame_no: i32, frame_type: FrameType, f_pth: &str) -> CineResult<()> {
         todo!()
     }
@@ -183,9 +178,6 @@ impl VideoOps for Mp4File {
         todo!()
     }
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData> {
-        todo!()
-    }
-    fn encoded_as(&self, encoding: EncoderType) -> CineResult<EncoderType> {
         todo!()
     }
     fn save_frame_as(&self, frame_no: i32, frame_type: FrameType, f_pth: &str) -> CineResult<()> {

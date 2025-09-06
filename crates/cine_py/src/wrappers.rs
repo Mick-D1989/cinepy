@@ -14,6 +14,7 @@ use cine_core::file::{VideoHeader, VideoOps};
 create_exception!(cinepy, PyCineError, PyException);
 create_exception!(cinepy, PyConversionError, PyCineError);
 create_exception!(cinepy, PyUnsupportedError, PyCineError);
+create_exception!(cinepy, PyEncodingError, PyCineError);
 
 pub struct PyCineErr(pub CineError);
 
@@ -23,6 +24,7 @@ impl From<PyCineErr> for PyErr {
             CineError::Conversion(e) => PyConversionError::new_err(e.to_string()),
             CineError::Unsupported(e) => PyUnsupportedError::new_err(e.to_string()),
             CineError::IoError(e) => PyIOError::new_err(e.to_string()),
+            CineError::Encoding(e) => PyEncodingError::new_err(e.to_string()),
         }
     }
 }

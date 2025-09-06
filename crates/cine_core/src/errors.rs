@@ -1,6 +1,7 @@
+use image::ImageError;
 use std::error::Error;
 use std::fmt;
-use std::result::Result; // Use the full path to avoid ambiguity
+use std::result::Result;
 
 // NOTE: Removed `Clone`, `Hash`, `PartialEq` because `std::io::Error` doesn't support them.
 #[derive(Debug)]
@@ -8,6 +9,7 @@ pub enum CineError {
     Conversion(ConversionError),
     Unsupported(FileTypeError),
     IoError(std::io::Error),
+    Encoding(image::ImageError),
 }
 
 // Struct to hold conversion-specific errors
@@ -71,6 +73,12 @@ impl From<std::io::Error> for CineError {
     }
 }
 
+impl From<ImageError> for CineError {
+    fn from(err: ImageError) -> CineError {
+        CineError::Encoding(err)
+    }
+}
+
 // Now we can also automatically convert our custom error structs into the enum
 impl From<ConversionError> for CineError {
     fn from(err: ConversionError) -> CineError {
@@ -94,6 +102,7 @@ impl fmt::Display for CineError {
             CineError::Conversion(err) => err.fmt(f),
             CineError::IoError(err) => err.fmt(f),
             CineError::Unsupported(err) => err.fmt(f),
+            CineError::Encoding(err) => err.fmt(f),
         }
     }
 }
@@ -105,6 +114,7 @@ impl Error for CineError {
             CineError::Conversion(err) => Some(err), // err.source() is called implicitly
             CineError::IoError(err) => Some(err),
             CineError::Unsupported(err) => Some(err),
+            CineError::Encoding(err) => Some(err),
         }
     }
 }

@@ -1,8 +1,7 @@
 use crate::errors::CineResult;
-use base64::{engine::general_purpose, Engine as _};
-use image::codecs::png::{CompressionType, FilterType, PngEncoder};
+use base64::{Engine as _, engine::general_purpose};
 use image::ImageEncoder;
-use image::{ImageBuffer, ImageFormat, Luma};
+use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use std::cell::RefCell;
 use std::io::Cursor;
 
@@ -74,28 +73,20 @@ impl FrameType {
                 FilterType::NoFilter,
             );
 
-            let _ = encoder.write_image(
+            encoder.write_image(
                 bytemuck::cast_slice(pixels),
                 width,
                 height,
                 image::ExtendedColorType::L16,
-            );
+            )?;
 
-            Ok(buf.clone())
+            let out_vec = std::mem::take(&mut *buf);
+
+            Ok(out_vec)
         })
     }
 
     fn return_raw(pixels: &[u16], width: u32, height: u32) -> CineResult<Vec<u16>> {
         Ok(pixels.to_vec())
-    }
-}
-
-pub enum EncoderType {
-    Base64,
-}
-
-impl EncoderType {
-    pub fn encode(&self, frame: FrameData) -> CineResult<()> {
-        Ok(())
     }
 }
