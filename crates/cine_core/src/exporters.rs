@@ -1,8 +1,10 @@
 use crate::errors::CineResult;
 use base64::{Engine as _, engine::general_purpose};
+use bytemuck;
 use image::ImageEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use std::cell::RefCell;
+use std::convert::AsRef;
 use std::io::Cursor;
 
 #[derive(Debug)]
@@ -11,6 +13,17 @@ pub enum FrameData {
     Bytes(Vec<u8>),
     Png(Vec<u8>),
     Raw(Vec<u16>),
+}
+
+impl AsRef<[u8]> for FrameData {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            FrameData::Base64(s) => s.as_bytes(),
+            FrameData::Bytes(s) => s,
+            FrameData::Png(s) => s,
+            FrameData::Raw(s) => bytemuck::cast_slice(s),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -29,7 +42,9 @@ impl FrameType {
         height: u32,
     ) -> CineResult<FrameData> {
         match self {
-            Self::Base64 => Ok(FrameData::Base64(Self::return_base64(pixels)?)),
+            Self::Base64 => Ok(FrameData::Base64(Self::return_base64(
+                pixels, width, height,
+            )?)),
             Self::Bytes => Ok(FrameData::Bytes(Self::return_bytes(pixels)?)),
             Self::Png => Ok(FrameData::Png(Self::return_png(pixels, width, height)?)),
             Self::Raw => Ok(FrameData::Raw(Self::return_raw(pixels, width, height)?)),
@@ -43,15 +58,19 @@ impl FrameType {
         height: u32,
     ) -> CineResult<FrameData> {
         match self {
-            Self::Base64 => Ok(FrameData::Base64(Self::return_base64(pixels)?)),
+            Self::Base64 => Ok(FrameData::Base64(Self::return_base64(
+                pixels, width, height,
+            )?)),
             Self::Bytes => Ok(FrameData::Bytes(Self::return_bytes(pixels)?)),
             Self::Png => Ok(FrameData::Png(Self::return_png(pixels, width, height)?)),
             Self::Raw => Ok(FrameData::Raw(Self::return_raw(pixels, width, height)?)),
         }
     }
 
-    fn return_base64(pixels: &[u16]) -> CineResult<String> {
-        todo!()
+    fn return_base64(pixels: &[u16], width: u32, height: u32) -> CineResult<String> {
+        // Returns a PNG encoded as base64
+        let img_png = Self::return_png(pixels, width, height)?;
+        Ok(general_purpose::STANDARD.encode(img_png))
     }
 
     fn return_bytes(pixels: &[u16]) -> CineResult<Vec<u8>> {

@@ -12,7 +12,12 @@ use std::mem;
 pub trait VideoOps {
     fn get_headers(&self) -> CineResult<VideoHeader>;
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData>; // Returns either a Vec<u8> or Vec<u16> in the format of bytes, PNG representation, etc
-    fn save_frame_as(&self, frame_no: i32, frame_type: FrameType, f_pth: &str) -> CineResult<()>;
+    fn save_frame_as(
+        &mut self,
+        frame_no: i32,
+        frame_type: FrameType,
+        f_pth: &str,
+    ) -> CineResult<()>;
 }
 
 pub struct VideoHeader {
@@ -159,8 +164,14 @@ impl VideoOps for CineFile {
         frame_type.get_frame_from_frametype(&self.pixels, width, height)
     }
 
-    fn save_frame_as(&self, frame_no: i32, frame_type: FrameType, f_pth: &str) -> CineResult<()> {
-        todo!()
+    fn save_frame_as(
+        &mut self,
+        frame_no: i32,
+        frame_type: FrameType,
+        f_pth: &str,
+    ) -> CineResult<()> {
+        let img = Self::get_frame_as(self, frame_no, frame_type)?;
+        Ok(std::fs::write(f_pth, &img)?)
     }
 }
 
@@ -180,7 +191,12 @@ impl VideoOps for Mp4File {
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData> {
         todo!()
     }
-    fn save_frame_as(&self, frame_no: i32, frame_type: FrameType, f_pth: &str) -> CineResult<()> {
+    fn save_frame_as(
+        &mut self,
+        frame_no: i32,
+        frame_type: FrameType,
+        f_pth: &str,
+    ) -> CineResult<()> {
         todo!()
     }
 }

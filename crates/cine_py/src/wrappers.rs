@@ -104,7 +104,7 @@ impl CinePy {
     }
 
     pub fn save_frame_as(
-        &self,
+        &mut self,
         frame_no: i32,
         frame_type: PyFrameType,
         path: &str,

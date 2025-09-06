@@ -1,11 +1,15 @@
-# import pytest
-# import cine_py
-# import numpy as np
-# import cv2
+import pytest
+import cine_py
+import numpy as np
+import cv2
 
-# temp="temp"
-# fPth = f"./files/{temp}.cine"
-# save_path=f"./files/{temp}.png"
+temp="temp"
+fPth = f"./files/{temp}.cine"
+save_path=f"./files/{temp}.png"
+
+def test_save_img():
+    cine_file = cine_py.CinePy(fPth)
+    cine_file.save_frame_as(0, cine_py.PyFrameType.Png, save_path)
 
 
 # def test_open():
