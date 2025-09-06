@@ -6,6 +6,7 @@ pub mod wrappers;
 fn cine_py(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<wrappers::CinePy>()?;
     m.add_class::<wrappers::PyFrameType>()?;
+    m.add_class::<wrappers::PySaveType>()?;
 
     m.add("PyCineError", py.get_type::<wrappers::PyCineError>())?;
     m.add(

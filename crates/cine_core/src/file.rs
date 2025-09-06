@@ -2,8 +2,7 @@ use crate::cine;
 use crate::conversions::ColorFilterArray;
 use crate::decompress::Decompression;
 use crate::errors::CineResult;
-use crate::exporters::FrameData;
-use crate::exporters::FrameType;
+use crate::exporters::{FrameData, FrameType, SaveData, SaveType};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
@@ -12,12 +11,7 @@ use std::mem;
 pub trait VideoOps {
     fn get_headers(&self) -> CineResult<VideoHeader>;
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData>; // Returns either a Vec<u8> or Vec<u16> in the format of bytes, PNG representation, etc
-    fn save_frame_as(
-        &mut self,
-        frame_no: i32,
-        frame_type: FrameType,
-        f_pth: &str,
-    ) -> CineResult<()>;
+    fn save_frame_as(&mut self, frame_no: i32, save_type: SaveType, f_pth: &str) -> CineResult<()>;
 }
 
 pub struct VideoHeader {
@@ -161,16 +155,15 @@ impl VideoOps for CineFile {
         let height = self.bitmap_info_header.bi_height as u32;
 
         self.get_frame(frame_no)?;
-        frame_type.get_frame_from_frametype(&self.pixels, width, height)
+        frame_type.format(&self.pixels, width, height)
     }
 
-    fn save_frame_as(
-        &mut self,
-        frame_no: i32,
-        frame_type: FrameType,
-        f_pth: &str,
-    ) -> CineResult<()> {
-        let img = Self::get_frame_as(self, frame_no, frame_type)?;
+    fn save_frame_as(&mut self, frame_no: i32, save_type: SaveType, f_pth: &str) -> CineResult<()> {
+        let width = self.bitmap_info_header.bi_width as u32;
+        let height = self.bitmap_info_header.bi_height as u32;
+
+        self.get_frame(frame_no)?;
+        let img = save_type.format(&self.pixels, width, height)?;
         Ok(std::fs::write(f_pth, &img)?)
     }
 }
@@ -191,12 +184,7 @@ impl VideoOps for Mp4File {
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData> {
         todo!()
     }
-    fn save_frame_as(
-        &mut self,
-        frame_no: i32,
-        frame_type: FrameType,
-        f_pth: &str,
-    ) -> CineResult<()> {
+    fn save_frame_as(&mut self, frame_no: i32, save_type: SaveType, f_pth: &str) -> CineResult<()> {
         todo!()
     }
 }

@@ -1,3 +1,4 @@
+use cine_core::exporters::SaveType;
 use pyo3::Python;
 use pyo3::create_exception;
 use pyo3::exceptions::{PyException, PyIOError};
@@ -39,8 +40,8 @@ pub enum PyFrameType {
 }
 
 impl From<PyFrameType> for FrameType {
-    fn from(frame: PyFrameType) -> Self {
-        match frame {
+    fn from(val: PyFrameType) -> Self {
+        match val {
             PyFrameType::Base64 => FrameType::Base64,
             PyFrameType::Bytes => FrameType::Bytes,
             PyFrameType::Png => FrameType::Png,
@@ -50,12 +51,40 @@ impl From<PyFrameType> for FrameType {
 }
 
 impl From<FrameType> for PyFrameType {
-    fn from(frame: FrameType) -> Self {
-        match frame {
+    fn from(val: FrameType) -> Self {
+        match val {
             FrameType::Base64 => PyFrameType::Base64,
             FrameType::Bytes => PyFrameType::Bytes,
             FrameType::Png => PyFrameType::Png,
             FrameType::Raw => PyFrameType::Raw,
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Clone, Copy)]
+pub enum PySaveType {
+    Jpeg,
+    Mp4,
+    Png,
+}
+
+impl From<PySaveType> for SaveType {
+    fn from(val: PySaveType) -> Self {
+        match val {
+            PySaveType::Jpeg => SaveType::Png,
+            PySaveType::Mp4 => SaveType::Mp4,
+            PySaveType::Png => SaveType::Png,
+        }
+    }
+}
+
+impl From<SaveType> for PySaveType {
+    fn from(val: SaveType) -> Self {
+        match val {
+            SaveType::Jpeg => PySaveType::Jpeg,
+            SaveType::Mp4 => PySaveType::Mp4,
+            SaveType::Png => PySaveType::Png,
         }
     }
 }
@@ -106,12 +135,12 @@ impl CinePy {
     pub fn save_frame_as(
         &mut self,
         frame_no: i32,
-        frame_type: PyFrameType,
+        save_type: PySaveType,
         path: &str,
     ) -> PyResult<()> {
-        let ft = frame_type.into();
+        let st = save_type.into();
         self.inner
-            .save_frame_as(frame_no, ft, path)
+            .save_frame_as(frame_no, st, path)
             .map_err(PyCineErr)?;
         Ok(())
     }

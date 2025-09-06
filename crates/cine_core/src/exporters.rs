@@ -5,7 +5,14 @@ use image::ImageEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use std::cell::RefCell;
 use std::convert::AsRef;
-use std::io::Cursor;
+
+#[derive(Debug, Clone, Copy)]
+pub enum FrameType {
+    Base64,
+    Bytes,
+    Png,
+    Raw,
+}
 
 #[derive(Debug)]
 pub enum FrameData {
@@ -26,37 +33,8 @@ impl AsRef<[u8]> for FrameData {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum FrameType {
-    Base64,
-    Bytes,
-    Png,
-    Raw,
-}
-
 impl FrameType {
-    pub fn get_frame_from_frametype(
-        &self,
-        pixels: &[u16],
-        width: u32,
-        height: u32,
-    ) -> CineResult<FrameData> {
-        match self {
-            Self::Base64 => Ok(FrameData::Base64(Self::return_base64(
-                pixels, width, height,
-            )?)),
-            Self::Bytes => Ok(FrameData::Bytes(Self::return_bytes(pixels)?)),
-            Self::Png => Ok(FrameData::Png(Self::return_png(pixels, width, height)?)),
-            Self::Raw => Ok(FrameData::Raw(Self::return_raw(pixels, width, height)?)),
-        }
-    }
-
-    pub fn save_frame_from_frametype(
-        &self,
-        pixels: &[u16],
-        width: u32,
-        height: u32,
-    ) -> CineResult<FrameData> {
+    pub fn format(&self, pixels: &[u16], width: u32, height: u32) -> CineResult<FrameData> {
         match self {
             Self::Base64 => Ok(FrameData::Base64(Self::return_base64(
                 pixels, width, height,
@@ -107,5 +85,51 @@ impl FrameType {
 
     fn return_raw(pixels: &[u16], width: u32, height: u32) -> CineResult<Vec<u16>> {
         Ok(pixels.to_vec())
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum SaveType {
+    Jpeg,
+    Mp4,
+    Png,
+}
+
+#[derive(Debug)]
+pub enum SaveData {
+    Jpeg(Vec<u8>),
+    Mp4(Vec<u8>),
+    Png(Vec<u8>),
+}
+
+impl AsRef<[u8]> for SaveData {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            Self::Jpeg(s) => s,
+            Self::Mp4(s) => s,
+            Self::Png(s) => s,
+        }
+    }
+}
+
+impl SaveType {
+    pub fn format(&self, pixels: &[u16], width: u32, height: u32) -> CineResult<SaveData> {
+        match self {
+            Self::Jpeg => Ok(SaveData::Jpeg(Self::return_jpeg(pixels, width, height)?)),
+            Self::Mp4 => Ok(SaveData::Mp4(Self::return_mp4(pixels, width, height)?)),
+            Self::Png => Ok(SaveData::Png(Self::return_png(pixels, width, height)?)),
+        }
+    }
+
+    fn return_jpeg(pixels: &[u16], width: u32, height: u32) -> CineResult<Vec<u8>> {
+        todo!()
+    }
+
+    fn return_mp4(pixels: &[u16], width: u32, height: u32) -> CineResult<Vec<u8>> {
+        todo!()
+    }
+
+    fn return_png(pixels: &[u16], width: u32, height: u32) -> CineResult<Vec<u8>> {
+        FrameType::return_png(pixels, width, height)
     }
 }
