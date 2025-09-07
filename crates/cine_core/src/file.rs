@@ -73,13 +73,13 @@ impl CineFile {
         let compression_type =
             Decompression::get_decompression_type(&bitmap_info_header.bi_compression)?;
 
-        let pixel_buffer = if compression_type == Decompression::Packed10Bit {
-            vec![0u16; img_byte_buffer.capacity() * 4 / 5]
-        } else if compression_type == Decompression::Packed12Bit {
-            vec![0u16; img_byte_buffer.capacity() * 2 / 3]
-        } else {
-            vec![0u16; img_byte_buffer.capacity()]
+        let pixel_buffer_size = match compression_type {
+            Decompression::Packed10Bit => img_byte_buffer.capacity() * 4 / 5,
+            Decompression::Packed12Bit => img_byte_buffer.capacity() * 2 / 3,
+            _ => img_byte_buffer.capacity(),
         };
+
+        let pixel_buffer = vec![0u16; pixel_buffer_size];
 
         let cfa = ColorFilterArray::get_cfa(&setup.CFA).unwrap();
 

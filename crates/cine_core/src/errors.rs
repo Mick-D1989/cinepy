@@ -15,7 +15,7 @@ pub enum CineError {
 // Struct to hold conversion-specific errors
 #[derive(Debug)]
 pub struct ConversionError {
-    pub file_type: String,
+    pub fail_type: String,
     // Add a source field to store the underlying error
     pub source: Box<dyn Error + Send + Sync>,
 }
@@ -30,10 +30,18 @@ pub struct FileTypeError {
 
 impl ConversionError {
     // The `new` function now stores the source error
-    pub fn new(file_type: impl ToString, err: impl Into<Box<dyn Error + Send + Sync>>) -> Self {
+    pub fn new(fail_type: impl ToString, err: impl Into<Box<dyn Error + Send + Sync>>) -> Self {
         ConversionError {
-            file_type: file_type.to_string(),
+            fail_type: fail_type.to_string(),
             source: err.into(),
+        }
+    }
+
+    // Add a convenience constructor for string errors
+    pub fn from_string(fail_type: impl ToString, message: impl ToString) -> Self {
+        ConversionError {
+            fail_type: fail_type.to_string(),
+            source: message.to_string().into(),
         }
     }
 }
@@ -41,7 +49,7 @@ impl ConversionError {
 // User-friendly display message
 impl fmt::Display for ConversionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Failed to convert file type: {}", self.file_type)
+        write!(f, "Failed to convert file type: {}", self.fail_type)
     }
 }
 
@@ -66,7 +74,7 @@ impl Error for FileTypeError {}
 
 // --- Implementations for the main CineError enum ---
 
-// This allows you to use the `?` operator on functions returning `std::io::Result`.
+// This allows you to use the `?` operator on functions to propegate the error up the stack
 impl From<std::io::Error> for CineError {
     fn from(err: std::io::Error) -> CineError {
         CineError::IoError(err)
@@ -79,7 +87,6 @@ impl From<ImageError> for CineError {
     }
 }
 
-// Now we can also automatically convert our custom error structs into the enum
 impl From<ConversionError> for CineError {
     fn from(err: ConversionError) -> CineError {
         CineError::Conversion(err)

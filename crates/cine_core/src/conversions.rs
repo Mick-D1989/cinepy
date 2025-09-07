@@ -1,7 +1,7 @@
 // This file contains the color correction algorithims described in
 // "Phantom SDK Cine File Format Manual Version 3.11.11.806"
 
-use crate::errors::{CineError, CineResult};
+use crate::errors::{CineError, CineResult, ConversionError};
 use crate::file::CineFile;
 
 #[derive(Clone, PartialEq)]
@@ -72,23 +72,17 @@ impl ColorFilterArray {
     // pub fn get_buffer_size(&self, )
 
     fn grayscale_10_to_16bit(cine_file: &mut CineFile) -> CineResult<()> {
-        for (i, &pixel) in cine_file.pixel_buffer.iter().enumerate() {
-            // 10-bit packed set black level at 64 and white level at 1014
-            // if *pixel > 1014 {
-            //     *pixel = 1023
-            // } else if *pixel < 64 {
-            //     *pixel = 0
-            // }
-            // // Clamp the value to ensure it's a valid index for the LUT
-            // let clamped = (*pixel).min(1023);
+        // Using pixel_buffer directly for input and pixels for output
+        let width = cine_file.bitmap_info_header.bi_width as usize;
+        let height = cine_file.bitmap_info_header.bi_height as usize;
+        let total_pixels = width * height;
 
-            // // Overwrite the original value with the new value from the LUT.
-            // // converts from 10-bits packed to 12-bits linear
-            // *pixel = LUT_10_TO_12[clamped as usize];
+        // Make sure we don't go out of bounds
+        for i in 0..total_pixels.min(cine_file.pixel_buffer.len()) {
             // Convert from 12-bits to 16-bits.
             // Since the most significant 4 bits will always be empty in the 12-bit linear conversion,
             // this remains a linear scaling transformation, ie. pix << n == pix * (2^n).
-            cine_file.pixels[i] = pixel << 6;
+            cine_file.pixels[i] = cine_file.pixel_buffer[i] << 6;
         }
         Ok(())
     }
@@ -105,7 +99,18 @@ impl ColorFilterArray {
     fn bayer(cine_file: &mut CineFile) -> CineResult<()> {
         let width = cine_file.bitmap_info_header.bi_width as u32;
         let height = cine_file.bitmap_info_header.bi_height as u32;
-        // let mut rgb_data: Vec<u16> = vec![0u16; (width * height * 3) as usize];
+
+        // Calculate the actual pixel count based on buffer sizes
+        let total_pixels = (width * height) as usize;
+
+        // Make sure we don't go out of bounds for both buffers
+        if total_pixels > cine_file.pixel_buffer.len() || total_pixels * 3 > cine_file.pixels.len()
+        {
+            return Err(CineError::Conversion(ConversionError::from_string(
+                "Buffer size mismatch",
+                "Pixel buffer size doesn't match expected dimensions",
+            )));
+        }
 
         for y in 1..(height - 1) {
             for x in 1..(width - 1) {
