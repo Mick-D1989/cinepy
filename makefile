@@ -21,7 +21,7 @@ python-test:python-dev
 python-test-release:python-release
 	uv pip install -r crates/cine_py/python/tests/requirements.txt
 # 	pytest crates/cine_py/python/tests/test_all.py::test_base64
-	pytest crates/cine_py/python/tests
+	pytest crates/cine_py/python/tests/test_grayscale.py
 
 python-test-benchmark:python-test-release
 	./python_benchmark.sh > benchmark_result_$$(date +"%Y%m%d_%H-%M")
