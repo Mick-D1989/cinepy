@@ -72,7 +72,7 @@ pub enum PySaveType {
 impl From<PySaveType> for SaveType {
     fn from(val: PySaveType) -> Self {
         match val {
-            PySaveType::Jpeg => SaveType::Png,
+            PySaveType::Jpeg => SaveType::Jpeg,
             PySaveType::Mp4 => SaveType::Mp4,
             PySaveType::Png => SaveType::Png,
         }
