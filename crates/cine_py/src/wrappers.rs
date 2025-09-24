@@ -61,28 +61,6 @@ impl From<VideoHeader> for PyVideoHeader {
     }
 }
 
-#[pyclass]
-#[derive(Debug, Clone)]
-pub enum PyReturnableHeaders {
-    CineFileHeader(cine_wrappers::PyCineFileHeader),
-    BitmapInfoHeader(cine_wrappers::PyBitmapInfoHeader),
-    Setup(cine_wrappers::PySetup),
-}
-
-impl From<ReturnableHeaders> for PyReturnableHeaders {
-    fn from(val: ReturnableHeaders) -> Self {
-        match val {
-            ReturnableHeaders::CineFileHeader(header) => {
-                PyReturnableHeaders::CineFileHeader(header.into())
-            }
-            ReturnableHeaders::BitmapInfoHeader(header) => {
-                PyReturnableHeaders::BitmapInfoHeader(header.into())
-            }
-            ReturnableHeaders::Setup(header) => PyReturnableHeaders::Setup(header.into()),
-        }
-    }
-}
-
 #[pyclass(unsendable)]
 pub struct CinePy {
     inner: Box<dyn VideoOps>,
@@ -96,9 +74,22 @@ impl CinePy {
         Ok(Self { inner })
     }
 
-    pub fn get_headers(&self, header: PyVideoHeader) -> PyResult<PyReturnableHeaders> {
+    pub fn get_headers(&self, header: PyVideoHeader) -> PyResult<PyObject> {
         let return_header = self.inner.get_headers(header.into()).map_err(PyCineErr)?;
-        Ok(return_header.into())
+        Python::with_gil(|py| {
+            let py_object = match return_header {
+                ReturnableHeaders::CineFileHeader(header) => {
+                    Py::new(py, cine_wrappers::PyCineFileHeader::from(header))?.into()
+                }
+                ReturnableHeaders::BitmapInfoHeader(header) => {
+                    Py::new(py, cine_wrappers::PyBitmapInfoHeader::from(header))?.into()
+                }
+                ReturnableHeaders::Setup(header) => {
+                    Py::new(py, cine_wrappers::PySetup::from(header))?.into()
+                }
+            };
+            Ok(py_object)
+        })
     }
 
     pub fn get_frame_as(&mut self, frame_no: i32, frame_type: PyFrameType) -> PyResult<PyObject> {

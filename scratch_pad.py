@@ -1,4 +1,4 @@
-import cine_py
+from cine_py import CinePy, PyFrameType, PySaveType, PyVideoHeader
 import numpy as np
 import cv2 
 import timeit
@@ -15,30 +15,9 @@ def utf8len(s):
     return len(s.encode('utf-8'))
 
 temp = "temp"
-fPth = f"/terminal_effects/src/cinepy/files/{temp}.cine"
-cine_file = cine_py.CineFile(fPth)
+fPth = f"./files/{temp}.cine"
+cine_file = CinePy(fPth)
 
-width, height = cine_file.bitmap_info_header.bi_width, cine_file.bitmap_info_header.bi_height
+setup = cine_file.get_headers(PyVideoHeader.BitmapInfoHeader)
 
-frame_no=0
-
-b64 = cine_file.base64_png(frame_no)
-b64_size = utf8len(b64)
-
-start_cine = time.perf_counter()
-cine_file = cine_py.CineFile(fPth)
-frame_bytes = cine_file.get_frame(frame_no)
-end_cine = time.perf_counter()
-
-frame_bytes_as_np = np.asarray(frame_bytes, dtype=np.uint16)
-frame_bytes_as_np.shape = (height,width)
-
-# image_opencv = cv2.normalize(frame_bytes_as_np, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-image_opencv = cv2.cvtColor(frame_bytes_as_np, cv2.COLOR_Bayer_gr)
-cv2.imshow("Decoded Image", image_opencv)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-
-# assert(cine_file.cine_file_header.version)
-# assert(cine_file.setup.serial == 23907)
+print("end")
