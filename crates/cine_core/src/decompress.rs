@@ -36,7 +36,7 @@ impl Decompression {
         let mut j: usize = 0;
 
         while i + 4 < cine_file.img_byte_buffer.len() && j + 3 < cine_file.pixel_buffer.len() {
-            // set the values for each 4 pixels. assume they're ordered as;
+            // values for 4 pixels stored in 5 bytes;
             // 00000000 00|000000 0000|0000 000000|00 00000000
             // ----p0-- --|----p1 ----|---- p2----|-- p3------
             // turns into;
@@ -69,7 +69,7 @@ impl Decompression {
 
         // Make sure we don't go out of bounds
         while i + 2 < cine_file.img_byte_buffer.len() && j + 1 < cine_file.pixel_buffer.len() {
-            // set the values for each 2 pixels. assume they're ordered as;
+            // values for 2 pixels stored in 3 bytes;
             // 00000000 0000|0000 00000000
             // ------p0 ----|---- p1-----|
             // turns into;

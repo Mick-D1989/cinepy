@@ -1,7 +1,7 @@
 use crate::cine;
 use crate::conversions::ColorFilterArray;
 use crate::decompress::Decompression;
-use crate::errors::CineResult;
+use crate::errors::{CineError, CineResult};
 use crate::exporters::{FrameData, FrameType, SaveData, SaveType};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
@@ -9,16 +9,22 @@ use std::mem;
 
 // The operations a caller can make on a generic video type
 pub trait VideoOps {
-    fn get_headers(&self) -> CineResult<VideoHeader>;
+    fn get_headers(&self, header_type: VideoHeader) -> CineResult<ReturnableHeaders>;
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData>; // Returns either a Vec<u8> or Vec<u16> in the format of bytes, PNG representation, etc
     fn save_frame_as(&mut self, frame_no: i32, save_type: SaveType, f_pth: &str) -> CineResult<()>;
 }
 
-pub struct VideoHeader {
-    pub file_name: String,
-    pub width: u32,
-    pub height: u32,
-    pub frame_count: u32,
+#[derive(Debug)]
+pub enum VideoHeader {
+    CineFileHeader,
+    BitmapInfoHeader,
+    Setup,
+}
+
+pub enum ReturnableHeaders {
+    CineFileHeader(cine::CineFileHeader),
+    BitmapInfoHeader(cine::BitmapInfoHeader),
+    Setup(cine::Setup),
 }
 
 pub struct CineFile {
@@ -141,13 +147,19 @@ impl CineFile {
 }
 
 impl VideoOps for CineFile {
-    fn get_headers(&self) -> CineResult<VideoHeader> {
-        Ok(VideoHeader {
-            file_name: "temp.cine".to_string(), // placeholder, need to drop all the null bytes from what the field actually takes
-            width: self.bitmap_info_header.bi_width as u32,
-            height: self.bitmap_info_header.bi_height as u32,
-            frame_count: self.cine_file_header.image_count,
-        })
+    fn get_headers(&self, header_type: VideoHeader) -> CineResult<ReturnableHeaders> {
+        match header_type {
+            VideoHeader::BitmapInfoHeader => {
+                Ok(ReturnableHeaders::BitmapInfoHeader(self.bitmap_info_header))
+            }
+            VideoHeader::CineFileHeader => {
+                Ok(ReturnableHeaders::CineFileHeader(self.cine_file_header))
+            }
+            VideoHeader::Setup => Ok(ReturnableHeaders::Setup(self.setup)),
+            // _ => Err(CineError::Header(crate::errors::HeaderAccessError {
+            //     bad_header: header_type,
+            // })),
+        }
     }
 
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData> {
@@ -178,7 +190,7 @@ impl Mp4File {
 }
 
 impl VideoOps for Mp4File {
-    fn get_headers(&self) -> CineResult<VideoHeader> {
+    fn get_headers(&self, header_type: VideoHeader) -> CineResult<ReturnableHeaders> {
         todo!()
     }
     fn get_frame_as(&mut self, frame_no: i32, frame_type: FrameType) -> CineResult<FrameData> {

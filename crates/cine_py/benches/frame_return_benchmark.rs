@@ -31,8 +31,10 @@ fn rust_py_wrapper_benchmark(c: &mut Criterion) {
             |_| {
                 let mut video_file =
                     CinePy::new(path).expect("Failed to open video for benchmarking");
-                let _ = video_file
-                    .get_frame_as(black_box(0), black_box(cine_py::wrappers::PyFrameType::Png));
+                let _ = video_file.get_frame_as(
+                    black_box(0),
+                    black_box(cine_py::export_wrappers::PyFrameType::Png),
+                );
             },
             criterion::BatchSize::SmallInput,
         );

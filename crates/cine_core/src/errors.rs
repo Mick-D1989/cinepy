@@ -1,3 +1,4 @@
+use crate::file::VideoHeader;
 use image::ImageError;
 use std::error::Error;
 use std::fmt;
@@ -8,6 +9,7 @@ use std::result::Result;
 pub enum CineError {
     Conversion(ConversionError),
     Unsupported(FileTypeError),
+    Header(HeaderAccessError),
     IoError(std::io::Error),
     Encoding(image::ImageError),
 }
@@ -24,6 +26,11 @@ pub struct ConversionError {
 #[derive(Debug)]
 pub struct FileTypeError {
     pub file_type: String,
+}
+
+#[derive(Debug)]
+pub struct HeaderAccessError {
+    pub bad_header: VideoHeader,
 }
 
 // --- Implementations for ConversionError ---
@@ -69,9 +76,29 @@ impl fmt::Display for FileTypeError {
     }
 }
 
+impl fmt::Display for HeaderAccessError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Attempting to access header which doesn't exist: {}",
+            self.bad_header
+        )
+    }
+}
+
+impl fmt::Display for VideoHeader {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VideoHeader::BitmapInfoHeader => write!(f, "BitmapInfoHeader"),
+            VideoHeader::CineFileHeader => write!(f, "CineFileHeader"),
+            VideoHeader::Setup => write!(f, "Setup"),
+        }
+    }
+}
+
 // Implement the Error trait. This error is a root cause, so `source()` returns None.
 impl Error for FileTypeError {}
-
+impl Error for HeaderAccessError {}
 // --- Implementations for the main CineError enum ---
 
 // This allows you to use the `?` operator on functions to propegate the error up the stack
@@ -99,6 +126,12 @@ impl From<FileTypeError> for CineError {
     }
 }
 
+impl From<HeaderAccessError> for CineError {
+    fn from(err: HeaderAccessError) -> CineError {
+        CineError::Header(err)
+    }
+}
+
 // Define our custom Result type
 pub type CineResult<T> = Result<T, CineError>;
 
@@ -110,6 +143,7 @@ impl fmt::Display for CineError {
             CineError::IoError(err) => err.fmt(f),
             CineError::Unsupported(err) => err.fmt(f),
             CineError::Encoding(err) => err.fmt(f),
+            CineError::Header(err) => err.fmt(f),
         }
     }
 }
@@ -122,6 +156,7 @@ impl Error for CineError {
             CineError::IoError(err) => Some(err),
             CineError::Unsupported(err) => Some(err),
             CineError::Encoding(err) => Some(err),
+            CineError::Header(err) => Some(err),
         }
     }
 }
