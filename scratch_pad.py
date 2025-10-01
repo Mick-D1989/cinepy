@@ -14,10 +14,12 @@ from pycine.raw import read_frames
 def utf8len(s):
     return len(s.encode('utf-8'))
 
-temp = "temp"
+temp = "10bit_packed_gray"
 fPth = f"./files/{temp}.cine"
 cine_file = CinePy(fPth)
 
-setup = cine_file.get_headers(PyVideoHeader.BitmapInfoHeader)
+bitmap_info_header = cine_file.get_headers(PyVideoHeader.BitmapInfoHeader)
+setup = cine_file.get_headers(PyVideoHeader.Setup)
+cine_header = cine_file.get_headers(PyVideoHeader.CineFileHeader)
 
 print("end")

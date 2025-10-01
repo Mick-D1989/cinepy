@@ -4,7 +4,7 @@
 use crate::errors::{CineError, CineResult, ConversionError};
 use crate::file::CineFile;
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ColorFilterArray {
     Gray,        // 0 - gray sensor
     Vri,         // 1 - gbrg / rggb

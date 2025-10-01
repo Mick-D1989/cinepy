@@ -1,6 +1,8 @@
-use crate::errors::CineResult;
+use crate::conversions::ColorFilterArray;
+use crate::errors::{CineError, CineResult, FileTypeError};
 use base64::{Engine as _, engine::general_purpose};
 use bytemuck;
+use core::panic;
 use image::ImageEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use std::cell::RefCell;
@@ -34,20 +36,33 @@ impl AsRef<[u8]> for FrameData {
 }
 
 impl FrameType {
-    pub fn format(&self, pixels: &[u16], width: u32, height: u32) -> CineResult<FrameData> {
+    pub fn format(
+        &self,
+        pixels: &[u16],
+        width: u32,
+        height: u32,
+        cfa: &ColorFilterArray,
+    ) -> CineResult<FrameData> {
         match self {
             Self::Base64 => Ok(FrameData::Base64(Self::return_base64(
-                pixels, width, height,
+                pixels, width, height, cfa,
             )?)),
             Self::Bytes => Ok(FrameData::Bytes(Self::return_bytes(pixels)?)),
-            Self::Png => Ok(FrameData::Png(Self::return_png(pixels, width, height)?)),
+            Self::Png => Ok(FrameData::Png(Self::return_png(
+                pixels, width, height, cfa,
+            )?)),
             Self::Raw => Ok(FrameData::Raw(Self::return_raw(pixels, width, height)?)),
         }
     }
 
-    fn return_base64(pixels: &[u16], width: u32, height: u32) -> CineResult<String> {
+    fn return_base64(
+        pixels: &[u16],
+        width: u32,
+        height: u32,
+        cfa: &ColorFilterArray,
+    ) -> CineResult<String> {
         // Returns a PNG encoded as base64
-        let img_png = Self::return_png(pixels, width, height)?;
+        let img_png = Self::return_png(pixels, width, height, cfa)?;
         Ok(general_purpose::STANDARD.encode(img_png))
     }
 
@@ -55,7 +70,12 @@ impl FrameType {
         todo!()
     }
 
-    fn return_png(pixels: &[u16], width: u32, height: u32) -> CineResult<Vec<u8>> {
+    fn return_png(
+        pixels: &[u16],
+        width: u32,
+        height: u32,
+        cfa: &ColorFilterArray,
+    ) -> CineResult<Vec<u8>> {
         thread_local! {
             static PNG_BUF: std::cell::RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
         }
@@ -70,12 +90,25 @@ impl FrameType {
                 FilterType::NoFilter,
             );
 
-            encoder.write_image(
-                bytemuck::cast_slice(pixels),
-                width,
-                height,
-                image::ExtendedColorType::L16,
-            )?;
+            match cfa {
+                ColorFilterArray::Gray => {
+                    encoder.write_image(
+                        bytemuck::cast_slice(pixels),
+                        width,
+                        height,
+                        image::ExtendedColorType::L16,
+                    )?;
+                }
+                ColorFilterArray::Bayer => {
+                    encoder.write_image(
+                        bytemuck::cast_slice(pixels),
+                        width,
+                        height,
+                        image::ExtendedColorType::Rgb16,
+                    )?;
+                }
+                _ => panic!(),
+            }
 
             let out_vec = std::mem::take(&mut *buf);
 
@@ -113,11 +146,17 @@ impl AsRef<[u8]> for SaveData {
 }
 
 impl SaveType {
-    pub fn format(&self, pixels: &[u16], width: u32, height: u32) -> CineResult<SaveData> {
+    pub fn format(
+        &self,
+        pixels: &[u16],
+        width: u32,
+        height: u32,
+        cfa: &ColorFilterArray,
+    ) -> CineResult<SaveData> {
         match self {
             Self::Jpeg => Ok(SaveData::Jpeg(Self::return_jpeg(pixels, width, height)?)),
             Self::Mp4 => Ok(SaveData::Mp4(Self::return_mp4(pixels, width, height)?)),
-            Self::Png => Ok(SaveData::Png(Self::return_png(pixels, width, height)?)),
+            Self::Png => Ok(SaveData::Png(Self::return_png(pixels, width, height, cfa)?)),
         }
     }
 
@@ -129,7 +168,12 @@ impl SaveType {
         todo!()
     }
 
-    fn return_png(pixels: &[u16], width: u32, height: u32) -> CineResult<Vec<u8>> {
-        FrameType::return_png(pixels, width, height)
+    fn return_png(
+        pixels: &[u16],
+        width: u32,
+        height: u32,
+        cfa: &ColorFilterArray,
+    ) -> CineResult<Vec<u8>> {
+        FrameType::return_png(pixels, width, height, cfa)
     }
 }

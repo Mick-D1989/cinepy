@@ -17,7 +17,7 @@
             "request": "launch",
             "cargo": {
                 "args": [
-                    "test",
+                    "bench",
                     "--no-run",
                     "--bench=frame_return_benchmark", // <-- Change this to your benchmark's name
                     "--package=cine_core" // <-- Change this to your package's name
@@ -28,7 +28,10 @@
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "sourceLanguages": [
+                "rust"
+            ]
         },
         {
             "name": "Debug Unit Test",
@@ -48,7 +51,10 @@
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "sourceLanguages": [
+                "rust"
+            ]
         },
         {
             "name": "Debug Executable",
@@ -67,7 +73,10 @@
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "sourceLanguages": [
+                "rust"
+            ]
         }
     ]
 }

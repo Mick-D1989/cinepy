@@ -24,9 +24,10 @@ pub enum VideoHeader {
 pub enum ReturnableHeaders {
     CineFileHeader(cine::CineFileHeader),
     BitmapInfoHeader(cine::BitmapInfoHeader),
-    Setup(cine::Setup),
+    Setup(Box<cine::Setup>),
 }
 
+#[derive(Debug)]
 pub struct CineFile {
     pub file: File,
     pub cine_file_header: cine::CineFileHeader,
@@ -155,7 +156,7 @@ impl VideoOps for CineFile {
             VideoHeader::CineFileHeader => {
                 Ok(ReturnableHeaders::CineFileHeader(self.cine_file_header))
             }
-            VideoHeader::Setup => Ok(ReturnableHeaders::Setup(self.setup)),
+            VideoHeader::Setup => Ok(ReturnableHeaders::Setup(Box::new(self.setup))),
             // _ => Err(CineError::Header(crate::errors::HeaderAccessError {
             //     bad_header: header_type,
             // })),
@@ -167,7 +168,7 @@ impl VideoOps for CineFile {
         let height = self.bitmap_info_header.bi_height as u32;
 
         self.get_frame(frame_no)?;
-        frame_type.format(&self.pixels, width, height)
+        frame_type.format(&self.pixels, width, height, &self.cfa)
     }
 
     fn save_frame_as(&mut self, frame_no: i32, save_type: SaveType, f_pth: &str) -> CineResult<()> {
@@ -175,7 +176,7 @@ impl VideoOps for CineFile {
         let height = self.bitmap_info_header.bi_height as u32;
 
         self.get_frame(frame_no)?;
-        let img = save_type.format(&self.pixels, width, height)?;
+        let img = save_type.format(&self.pixels, width, height, &self.cfa)?;
         Ok(std::fs::write(f_pth, &img)?)
     }
 }

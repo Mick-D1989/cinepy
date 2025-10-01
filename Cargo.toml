@@ -9,7 +9,7 @@ members = [
     "crates/cine_core", 
     "crates/cine_py"
 ]
-resolver = "3"
+resolver = "2"
 
 [workspace.package] 
 authors = ["Michael Durante <michaeldurante@hotmail.com>"]
@@ -19,3 +19,7 @@ license = "MIT"
 keywords = ["phantom", "high", "speed", "camera", "cine"]
 homepage = ""
 repository = ""
+
+[profile.bench]
+debug = true
+opt-level = 0

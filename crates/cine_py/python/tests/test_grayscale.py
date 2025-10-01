@@ -3,11 +3,23 @@ from cine_py import CinePy, PySaveType, PyFrameType
 import numpy as np
 import cv2
 
-temp="temp"
-fPth = f"./files/{temp}.cine"
+COMPRESSION_TYPES = {
+    "color_10_bit": "10bit_packed_color",
+    "gray_10_bit": "10bit_packed_gray",
+    # "color_12_bit": "12_bit_packed_color",
+    # "gray_12_bit":"12_bit_packed_gray",
+    # "color_uncompressed":"uncompressed_color",
+    "gray_uncompressed": "uncompressed_gray"
+}
 
+
+#################################################
+#           Open File Type Tests
+#################################################
 def test_open():
-    cine_file = CinePy(fPth)
+    for val in COMPRESSION_TYPES.values():
+        fPth = f"./files/{val}.cine"
+        cine_file = CinePy(fPth)
 
 #################################################
 #           Save File Type Tests
@@ -15,10 +27,12 @@ def test_open():
 
 def test_save_img_as_png():
     import os
-    save_path=f"./files/test_{temp}.png"
-    cine_file = CinePy(fPth)
-    cine_file.save_frame_as(0, PySaveType.Png, save_path)
-    assert(os.path.exists(save_path))
+    for val in COMPRESSION_TYPES.values():
+        fPth = f"./files/{val}.cine"
+        save_path=f"./files/test_{val}.png"
+        cine_file = CinePy(fPth)
+        cine_file.save_frame_as(0, PySaveType.Png, save_path)
+        assert(os.path.exists(save_path))
     # Need to do some more checks to make sure the image is in valid format....not sure how yet
 
 # def test_save_img_as_jpeg():
@@ -42,12 +56,16 @@ def test_save_img_as_png():
 #################################################
 
 def test_get_frame_as_png():
-    cine_file = CinePy(fPth)
-    cine_file.get_frame_as(0, PyFrameType.Png)
+    for val in COMPRESSION_TYPES.values():
+        fPth = f"./files/{val}.cine"
+        cine_file = CinePy(fPth)
+        cine_file.get_frame_as(0, PyFrameType.Png)
 
 def test_get_frame_as_base64():
-    cine_file = CinePy(fPth)
-    cine_file.get_frame_as(0, PyFrameType.Base64)
+    for val in COMPRESSION_TYPES.values():
+        fPth = f"./files/{val}.cine"
+        cine_file = CinePy(fPth)
+        cine_file.get_frame_as(0, PyFrameType.Base64)
 
 # def test_get_frame_as_raw():
 #     cine_file = CinePy(fPth)

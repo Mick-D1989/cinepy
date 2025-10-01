@@ -216,8 +216,8 @@ pub struct PySetup {
     pub sensor_options: u32,
 }
 
-impl From<Setup> for PySetup {
-    fn from(core: Setup) -> Self {
+impl From<Box<Setup>> for PySetup {
+    fn from(core: Box<Setup>) -> Self {
         Self {
             frame_rate_16: core.FrameRate16,
             shutter_16: core.Shutter16,

@@ -3,7 +3,7 @@ use std::io::Error;
 use crate::errors::CineResult;
 use crate::file::CineFile;
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Decompression {
     Uncompressed,
     Packed10Bit,
