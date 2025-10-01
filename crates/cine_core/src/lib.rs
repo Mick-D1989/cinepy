@@ -35,3 +35,22 @@ impl Video {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_open() {
+        let path = "../../files/uncompressed_gray.cine";
+        let mut video_file =
+            crate::Video::open(path).expect("Failed to open video file for benchmarking");
+    }
+
+    #[test]
+    fn test_get_png() {
+        let path = "../../files/uncompressed_gray.cine";
+        let mut video_file =
+            crate::Video::open(path).expect("Failed to open video file for benchmarking");
+        let png = video_file.get_frame_as(0, crate::exporters::FrameType::Png);
+    }
+}

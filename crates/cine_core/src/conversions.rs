@@ -166,7 +166,7 @@ impl ColorFilterArray {
                 let i: usize = idx * 3;
                 cine_file.pixels[i] = r << 6;
                 cine_file.pixels[i + 1] = g << 6;
-                cine_file.pixels[i + 2] = b << 2;
+                cine_file.pixels[i + 2] = b << 6;
             }
         }
         Ok(())
@@ -220,15 +220,3 @@ pub fn flip_vertical_16bit(data: &mut [u16], width: u32, height: u32) {
 //     }
 //     linear_pixels
 // }
-
-#[cfg(test)]
-mod tests {
-
-    #[test]
-
-    fn test_tests() {
-        let a = 1;
-        let b = 5;
-        assert_eq!(a * b, 5);
-    }
-}
