@@ -1,5 +1,6 @@
 use std::io::Error;
 
+use crate::cine;
 use crate::errors::CineResult;
 use crate::file::CineFile;
 
@@ -92,6 +93,16 @@ impl Decompression {
         // Uncompressed images are bottom up, which is the opposite of 10 & 12 bit compressed images
         // This flip the order of the pixels so they are top down so the corrections we apply later
         // on are consistent.
-        todo!()
+        let mut i = cine_file.img_byte_buffer.len() - 1;
+        let mut j = 0;
+
+        while i > 0 && j < (cine_file.img_byte_buffer.len() / 2) {
+            cine_file.pixel_buffer[j] = ((cine_file.img_byte_buffer[i] as u16) << 8)
+                | (cine_file.img_byte_buffer[i - 1] as u16);
+
+            i -= 2;
+            j += 1;
+        }
+        Ok(())
     }
 }

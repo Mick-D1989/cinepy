@@ -14,6 +14,7 @@ from pycine.raw import read_frames
 def utf8len(s):
     return len(s.encode('utf-8'))
 
+# temp = "uncompressed_gray"
 temp = "10bit_packed_gray"
 fPth = f"./files/{temp}.cine"
 cine_file = CinePy(fPth)
