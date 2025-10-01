@@ -1,5 +1,5 @@
 use crate::conversions::ColorFilterArray;
-use crate::errors::{CineError, CineResult, FileTypeError};
+use crate::errors::CineResult;
 use base64::{Engine as _, engine::general_purpose};
 use bytemuck;
 use core::panic;

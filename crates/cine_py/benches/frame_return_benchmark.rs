@@ -12,6 +12,9 @@ use std::hint::black_box;
 fn rust_py_wrapper_benchmark(c: &mut Criterion) {
     // when this gets run from the makefile, the crates root gets set as the working dir.
     let path = "../../files/temp.cine";
+    // when running this to debug, it gets run from the location so change the path to;
+    // let path = "./files/temp.cine";
+
     if !std::path::Path::new(path).exists() {
         eprintln!(
             "\n[Benchmark Warning] The test file '{}' was not found.",

@@ -1,6 +1,5 @@
 use std::io::Error;
 
-use crate::cine;
 use crate::errors::CineResult;
 use crate::file::CineFile;
 
@@ -30,29 +29,34 @@ impl Decompression {
             Self::Packed12Bit => Ok(Self::decompress_12bit_packed(cine_file)?),
         }
     }
-    /// Unpack 10-bit packed Bayer/greyscale into Vec<u16>
-    /// bi_compression=256 means that there is 4 pixles of 10-bit data stored in 5 bytes(40-bits).
+
     fn decompress_10bit_packed(cine_file: &mut CineFile) -> CineResult<()> {
+        // Unpack 10-bit packed Bayer/greyscale into Vec<u16>
+        // bi_compression=256 means that there is 4 pixles of 10-bit data stored in 5 bytes(40-bits).
+        //
+        // values for 4 pixels stored in 5 bytes;
+        // 00000000 00|000000 0000|0000 000000|00 00000000
+        // ----p0-- --|----p1 ----|---- p2----|-- p3------
+        // turns into;
+        // xxxxxx00 00000000 xxxxxx00 00000000 xxxxxx00 00000000 xxxxxx00 00000000
+        // --------p0------- --------p1------- --------p2------- --------p3-------
+        // and;
+        // p0 starts in the top left corner of the frame.
         let mut i: usize = 0;
         let mut j: usize = 0;
 
         while i + 4 < cine_file.img_byte_buffer.len() && j + 3 < cine_file.pixel_buffer.len() {
-            // values for 4 pixels stored in 5 bytes;
-            // 00000000 00|000000 0000|0000 000000|00 00000000
-            // ----p0-- --|----p1 ----|---- p2----|-- p3------
-            // turns into;
-            // xxxxxx00 00000000 xxxxxx00 00000000 xxxxxx00 00000000 xxxxxx00 00000000
-            // --------p0------- --------p1------- --------p2------- --------p3-------
-            // and;
-            // p0 starts in the top left corner of the frame.
             cine_file.pixel_buffer[j] = ((cine_file.img_byte_buffer[i] as u16) << 2)
                 | ((cine_file.img_byte_buffer[i + 1] as u16) >> 6);
+
             cine_file.pixel_buffer[j + 1] =
                 (((cine_file.img_byte_buffer[i + 1] & 0b0011_1111) as u16) << 4)
                     | ((cine_file.img_byte_buffer[i + 2] as u16) >> 4);
+
             cine_file.pixel_buffer[j + 2] =
                 (((cine_file.img_byte_buffer[i + 2] & 0b0000_1111) as u16) << 6)
                     | ((cine_file.img_byte_buffer[i + 3] as u16) >> 2);
+
             cine_file.pixel_buffer[j + 3] =
                 (((cine_file.img_byte_buffer[i + 3] & 0b0000_0011) as u16) << 8)
                     | (cine_file.img_byte_buffer[i + 4] as u16);
@@ -62,24 +66,25 @@ impl Decompression {
         Ok(())
     }
 
-    /// Unpack 12-bit packed Bayer/greyscale into Vec<u16>
-    /// bi_compression=1024 means that there is 2 pixles of 12-bit data stored in 3 bytes(24-bits).
     fn decompress_12bit_packed(cine_file: &mut CineFile) -> CineResult<()> {
+        // Unpack 12-bit packed Bayer/greyscale into Vec<u16>
+        // bi_compression=1024 means that there is 2 pixles of 12-bit data stored in 3 bytes(24-bits).
+        //
+        // values for 2 pixels stored in 3 bytes;
+        // 00000000 0000|0000 00000000
+        // ------p0 ----|---- p1-----|
+        // turns into;
+        // xxxx0000 00000000 xxxx0000 00000000
+        // --------p0------- --------p1-------
+        // and;
+        // p0 starts in the top left corner of the frame.
         let mut i: usize = 0;
         let mut j: usize = 0;
 
-        // Make sure we don't go out of bounds
         while i + 2 < cine_file.img_byte_buffer.len() && j + 1 < cine_file.pixel_buffer.len() {
-            // values for 2 pixels stored in 3 bytes;
-            // 00000000 0000|0000 00000000
-            // ------p0 ----|---- p1-----|
-            // turns into;
-            // xxxx0000 00000000 xxxx0000 00000000
-            // --------p0------- --------p1-------
-            // and;
-            // p0 starts in the top left corner of the frame.
             cine_file.pixel_buffer[j] = ((cine_file.img_byte_buffer[i] as u16) << 4)
                 | ((cine_file.img_byte_buffer[i + 1] as u16) >> 4);
+
             cine_file.pixel_buffer[j + 1] =
                 (((cine_file.img_byte_buffer[i + 1] & 0b0000_1111) as u16) << 8)
                     | (cine_file.img_byte_buffer[i + 2] as u16);

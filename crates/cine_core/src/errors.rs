@@ -4,7 +4,9 @@ use std::error::Error;
 use std::fmt;
 use std::result::Result;
 
-// NOTE: Removed `Clone`, `Hash`, `PartialEq` because `std::io::Error` doesn't support them.
+// Define custom Result type
+pub type CineResult<T> = Result<T, CineError>;
+
 #[derive(Debug)]
 pub enum CineError {
     Conversion(ConversionError),
@@ -14,15 +16,12 @@ pub enum CineError {
     Encoding(image::ImageError),
 }
 
-// Struct to hold conversion-specific errors
 #[derive(Debug)]
 pub struct ConversionError {
     pub fail_type: String,
-    // Add a source field to store the underlying error
     pub source: Box<dyn Error + Send + Sync>,
 }
 
-// Struct to hold file type-specific errors
 #[derive(Debug)]
 pub struct FileTypeError {
     pub file_type: String,
@@ -34,7 +33,6 @@ pub struct HeaderAccessError {
 }
 
 // --- Implementations for ConversionError ---
-
 impl ConversionError {
     // The `new` function now stores the source error
     pub fn new(fail_type: impl ToString, err: impl Into<Box<dyn Error + Send + Sync>>) -> Self {
@@ -44,7 +42,6 @@ impl ConversionError {
         }
     }
 
-    // Add a convenience constructor for string errors
     pub fn from_string(fail_type: impl ToString, message: impl ToString) -> Self {
         ConversionError {
             fail_type: fail_type.to_string(),
@@ -53,14 +50,12 @@ impl ConversionError {
     }
 }
 
-// User-friendly display message
 impl fmt::Display for ConversionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Failed to convert file type: {}", self.fail_type)
     }
 }
 
-// Implement the Error trait to allow for error chaining
 impl Error for ConversionError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         Some(self.source.as_ref())
@@ -69,7 +64,6 @@ impl Error for ConversionError {
 
 // --- Implementations for FileTypeError ---
 
-// User-friendly display message
 impl fmt::Display for FileTypeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Unsupported file type: {}", self.file_type)
@@ -99,8 +93,8 @@ impl fmt::Display for VideoHeader {
 // Implement the Error trait. This error is a root cause, so `source()` returns None.
 impl Error for FileTypeError {}
 impl Error for HeaderAccessError {}
-// --- Implementations for the main CineError enum ---
 
+// --- Implementations for the main CineError enum ---
 // This allows you to use the `?` operator on functions to propegate the error up the stack
 impl From<std::io::Error> for CineError {
     fn from(err: std::io::Error) -> CineError {
@@ -132,10 +126,6 @@ impl From<HeaderAccessError> for CineError {
     }
 }
 
-// Define our custom Result type
-pub type CineResult<T> = Result<T, CineError>;
-
-// The Display implementation now works because all inner types implement Display.
 impl fmt::Display for CineError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -148,11 +138,10 @@ impl fmt::Display for CineError {
     }
 }
 
-// The Error implementation now works because all inner types implement Error.
 impl Error for CineError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            CineError::Conversion(err) => Some(err), // err.source() is called implicitly
+            CineError::Conversion(err) => Some(err),
             CineError::IoError(err) => Some(err),
             CineError::Unsupported(err) => Some(err),
             CineError::Encoding(err) => Some(err),

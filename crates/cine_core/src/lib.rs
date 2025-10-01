@@ -5,11 +5,8 @@ pub mod errors;
 pub mod exporters;
 pub mod file;
 pub mod utils;
-
-use std::io::Result;
-use std::path::Path;
-
 use crate::errors::FileTypeError;
+use std::path::Path;
 
 pub struct Video;
 

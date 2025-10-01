@@ -2,7 +2,7 @@ use crate::cine;
 use crate::conversions::ColorFilterArray;
 use crate::decompress::Decompression;
 use crate::errors::{CineError, CineResult};
-use crate::exporters::{FrameData, FrameType, SaveData, SaveType};
+use crate::exporters::{FrameData, FrameType, SaveType};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
@@ -157,9 +157,9 @@ impl VideoOps for CineFile {
                 Ok(ReturnableHeaders::CineFileHeader(self.cine_file_header))
             }
             VideoHeader::Setup => Ok(ReturnableHeaders::Setup(Box::new(self.setup))),
-            // _ => Err(CineError::Header(crate::errors::HeaderAccessError {
-            //     bad_header: header_type,
-            // })),
+            _ => Err(CineError::Header(crate::errors::HeaderAccessError {
+                bad_header: header_type,
+            })),
         }
     }
 
