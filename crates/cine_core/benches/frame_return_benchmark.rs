@@ -5,7 +5,7 @@ use std::hint::black_box;
 /// Benchmarks the performance of retrieving a frame from a video file.
 fn get_frame_benchmark(c: &mut Criterion) {
     // when this gets run from the makefile, the crates root gets set as the working dir.
-    let path = "./files/uncompressed_gray.cine";
+    let path = "../../files/uncompressed_gray.cine";
     if !std::path::Path::new(path).exists() {
         eprintln!(
             "\n[Benchmark Warning] The test file '{}' was not found.",

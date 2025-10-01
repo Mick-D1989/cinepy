@@ -20,6 +20,7 @@ keywords = ["phantom", "high", "speed", "camera", "cine"]
 homepage = ""
 repository = ""
 
-[profile.bench]
-debug = true
-opt-level = 0
+# Un-comment this for debugging the benchmark
+# [profile.bench]
+# debug = true
+# opt-level = 0
